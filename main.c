@@ -7,7 +7,11 @@ void home_menu();
 
 void login_menu();
 
+void dashboard_menu();
+
 void setup();
+
+void title_printer(char *title);
 
 /* Data structure */
 typedef struct {
@@ -47,7 +51,11 @@ typedef struct {
 
 /* Main function */
 int main() {
+    // check if the database is setup
+
+
     setup();
+
     home_menu();
 
     return 0;
@@ -61,9 +69,7 @@ void home_menu() {
 
     int option;
 
-    printf("------------------------------------------------------\n");
-    printf("| Welcome to APU Programming Cafe Management System! |\n");
-    printf("------------------------------------------------------\n");
+    title_printer("Welcome to APU Programming Cafe Management System!");
     printf("1. Login\n");
     printf("0. Exit\n");
 
@@ -90,12 +96,60 @@ void home_menu() {
 }
 
 void login_menu() {
+    title_printer("Login page");
+    FILE *users_file = fopen("users.txt", "r");
 
+    // read the file users.txt
+    users user;
+    int authenticated = 0;
+    int login_attempts = 0;
+    const int max_login_attempts = 3;
+
+    while (login_attempts < max_login_attempts) {
+        char user_id[50];
+        char password[50];
+        printf("Please enter your user ID down below: \n");
+        scanf("%s", user_id);
+        printf("Please enter your password down below: \n");
+        scanf("%s", password);
+
+        for (int i = 0; i < 6; i++) {
+            fscanf(users_file, "%s %s %s %s %s", user.user_id, user.name, user.password, user.email, user.role);
+            if (strcmp(user.user_id, user_id) == 0 && strcmp(user.password, password) == 0) {
+                printf("Login successful!\n");
+                dashboard_menu();
+                authenticated = 1;
+                break;
+            }
+        }
+
+        if (authenticated) {
+            break;
+        } else {
+            login_attempts++;
+            printf("Login id or password is incorrect, %d attempts left. Please try again.\n", (3 - login_attempts));
+        }
+    }
+
+    if (!authenticated) {
+        printf("Max login attempts reached. Exiting program.\n");
+        exit(1);
+    }
+
+    fclose(users_file);
 }
+
+void dashboard_menu() {}
 
 
 /* APIs - implements create, read, update, delete to the database on .txt files */
 void setup() {
+    // create all the necessary files using pointer , each file is a table
+    FILE *sessions_file = fopen("sessions.txt", "w");
+    FILE *enrolled_sessions_file = fopen("enrolled_sessions.txt", "w");
+    FILE *users_file = fopen("users.txt", "w");
+    FILE *tutor_profile_file = fopen("tutor_profile.txt", "w");
+
     char default_sessions[5][6][50] = {
             {"PYP101", "Python Programming",  "Saturday", "9.00am", "C-01-01", "T265663"},
             {"JAV102", "Java Programming",    "Sunday",   "9.00am", "C-01-02", "T009650"},
@@ -121,11 +175,7 @@ void setup() {
             {"683357", "T683357", "C Sharp Programming"}
     };
 
-    // create all the necessary files using pointer , each file is a table
-    FILE *sessions_file = fopen("sessions.txt", "w");
-    FILE *enrolled_sessions_file = fopen("enrolled_sessions.txt", "w");
-    FILE *users_file = fopen("users.txt", "w");
-    FILE *tutor_profile_file = fopen("tutor_profile.txt", "w");
+
 
     // Seed
     // sessions.txt
@@ -159,6 +209,26 @@ void setup() {
 }
 
 void create() {}
+
+void title_printer(char *title) {
+    size_t str_len = strlen(title); // strlen returned unsigned long long, so we need to use size_t
+    size_t line_len = 4 + str_len;  // total line length is 4 + length of the string
+
+    // print the top line
+    for (int i = 0; i < line_len; i++) {
+        printf("-");
+    }
+    printf("\n");
+
+    // print the string line
+    printf("| %s |\n", title);
+
+    // print the bottom line
+    for (int i = 0; i < line_len; i++) {
+        printf("-");
+    }
+    printf("\n");
+}
 
 
 
