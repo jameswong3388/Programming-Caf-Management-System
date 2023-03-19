@@ -2,17 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* Functions declaration */
-void home_menu();
-
-void login_menu();
-
-void dashboard_menu();
-
-void setup();
-
-void title_printer(char *title);
-
 /* Data structure */
 typedef struct {
     char session_code[50];
@@ -49,28 +38,45 @@ typedef struct {
     char student_code[50];
 } student_profiles;
 
+/* Functions declaration */
+void home_menu();
+
+void login_menu();
+
+void dashboard_menu(users user);
+
+void admin_dashboard_menu(users user);
+
+void tutor_dashboard_menu(users user);
+
+void student_dashboard_menu(users user);
+
+void available_sessions_menu();
+
+void setup();
+
+void title_printer(char *title);
+
+int read(char *filename, char lines[][1000], int *num_lines);
+
+int insert(char *filename, void *data, size_t size);
+
 /* Main function */
 int main() {
-    // check if the database is setup
-
-
     setup();
 
     home_menu();
 
-    return 0;
+    return 0; // return 0 to indicate successful execution
 }
 
 /* Menus */
 void home_menu() {
-
-#define OPTION_LOGIN 1
-#define OPTION_EXIT 0
-
     int option;
 
     title_printer("Welcome to APU Programming Cafe Management System!");
     printf("1. Login\n");
+    printf("2. View available sessions\n");
     printf("0. Exit\n");
 
     while (1) {
@@ -82,10 +88,13 @@ void home_menu() {
         }
 
         switch (option) {
-            case OPTION_LOGIN:
+            case 1:
                 login_menu();
                 return; // exit the loop and return to the caller
-            case OPTION_EXIT:
+            case 2:
+                available_sessions_menu();
+                return; // exit the loop and return to the caller
+            case 0:
                 printf("Thank you for using APU Programming Cafe Management System!\n");
                 return; // exit the loop and return to the caller
             default:
@@ -103,23 +112,43 @@ void login_menu() {
     users user;
     int authenticated = 0;
     int login_attempts = 0;
+    int valid_user_id = 0;
     const int max_login_attempts = 3;
 
     while (login_attempts < max_login_attempts) {
         char user_id[50];
         char password[50];
-        printf("Please enter your user ID down below: \n");
+        printf("Please enter your User ID (TP number or Tutor code)  down below: \n");
         scanf("%s", user_id);
         printf("Please enter your password down below: \n");
         scanf("%s", password);
 
-        for (int i = 0; i < 6; i++) {
-            fscanf(users_file, "%s %s %s %s %s", user.user_id, user.name, user.password, user.email, user.role);
-            if (strcmp(user.user_id, user_id) == 0 && strcmp(user.password, password) == 0) {
-                printf("Login successful!\n");
-                dashboard_menu();
-                authenticated = 1;
-                break;
+        if ((user_id[0] == 'T' && user_id[1] == 'P') || (user_id[0] == 't' && user_id[1] == 'p')) {
+            valid_user_id = 1;
+            for (int i = 0; i < 50; i++) {
+                user_id[i] = user_id[i + 2];
+            }
+        } else if ((user_id[0] == 'T') || (user_id[0] == 't')) {
+            valid_user_id = 1;
+            for (int i = 0; i < 50; i++) {
+                user_id[i] = user_id[i + 1];
+            }
+        } else if ((user_id[0] == 'A') || (user_id[0] == 'a')) {
+            valid_user_id = 1;
+            for (int i = 0; i < 50; i++) {
+                user_id[i] = user_id[i + 1];
+            }
+        }
+
+        if (valid_user_id) {
+            for (int i = 0; i < 6; i++) {
+                fscanf(users_file, "%s %s %s %s %s", user.user_id, user.name, user.password, user.email, user.role);
+                if (strcmp(user.user_id, user_id) == 0 && strcmp(user.password, password) == 0) {
+                    printf("Login successful %s (%s) !\n", user.name, user.role);
+                    dashboard_menu(user);
+                    authenticated = 1;
+                    break;
+                }
             }
         }
 
@@ -139,8 +168,59 @@ void login_menu() {
     fclose(users_file);
 }
 
-void dashboard_menu() {}
+// create a function for dashboard menu
+// take a user as parameter using struct users
+void dashboard_menu(users user) {
+    title_printer("Dashboard");
+    printf("Welcome %s (%s) !\n", user.name, user.role);
+    if (strcmp(user.role, "student") == 0) {
+        student_dashboard_menu(user);
+    } else if (strcmp(user.role, "tutor") == 0) {
+        tutor_dashboard_menu(user);
+    } else if (strcmp(user.role, "admin") == 0) {
+        admin_dashboard_menu(user);
+    } else {
+        printf("Invalid user role. Please try again.\n");
+    }
+}
 
+void admin_dashboard_menu(users user) {
+    printf("1. Registration of Tutor\n");
+    printf("2. Registration of Student\n");
+    printf("3. Adding new programming cafe session.\n");
+    printf("4. Enroll student in sessions.\n");
+    printf("5. View sessions.\n");
+}
+
+void tutor_dashboard_menu(users user) {
+    printf("1. View sessions.\n");
+    printf("2. View students enrolled in sessions.\n");
+}
+
+void student_dashboard_menu(users user) {
+    printf("1. View my sessions.\n");
+}
+
+void available_sessions_menu() {
+    title_printer("Available sessions");
+
+    char lines[1000][1000];
+    int num_lines;
+
+    char *file_name = "sessions.txt";
+    int success = read(file_name, lines, &num_lines);
+
+    if (!success) {
+        printf("Error reading file %s\n", file_name);
+        return;
+    } else {
+        for (int i = 0; i < num_lines; i++) {
+            printf("Line %d: %s", i + 1, lines[i]);
+        }
+    }
+
+    home_menu();
+}
 
 /* APIs - implements create, read, update, delete to the database on .txt files */
 void setup() {
@@ -208,9 +288,52 @@ void setup() {
     fclose(tutor_profile_file);
 }
 
-void create() {}
+int insert(char *filename, void *data, size_t size) {
+    /*  Usages
+     *  users user = {"981255", "John", "123456", "admin@apu.edu.my admin"};
+     *  int response = insert("users.txt", (void *) &user, sizeof(users));
+     *  printf("response: %d", response);
+     * */
+
+    FILE *fp = fopen(filename, "a");
+
+    if (fp == NULL) {
+        printf("Error: could not open file %s\n", filename);
+        return 0;
+    }
+
+    fwrite(data, size, 1, fp);
+    fprintf(fp, "\n");
+
+    fclose(fp);
+    return 1;
+}
+
+int read(char *filename, char lines[][1000], int *num_lines) {
+    FILE *fp = fopen(filename, "r");
+    if (fp == NULL) {
+        printf("Error: could not open file %s\n", filename);
+        return 0;
+    }
+
+    char line[1000];
+    int i = 0;
+    while (fgets(line, 1000, fp) != NULL) {
+        strcpy(lines[i], line);
+        i++;
+        if (i == 1000) {
+            printf("Error: maximum number of lines exceeded\n");
+            break;
+        }
+    }
+    *num_lines = i;
+
+    fclose(fp);
+    return 1;
+}
 
 void title_printer(char *title) {
+    // size_t guaranteed to be big enough to contain the size of the biggest object the host system can handle.
     size_t str_len = strlen(title); // strlen returned unsigned long long, so we need to use size_t
     size_t line_len = 4 + str_len;  // total line length is 4 + length of the string
 
