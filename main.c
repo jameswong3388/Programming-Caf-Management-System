@@ -31,7 +31,7 @@ typedef struct {
     char user_id[50];
     char tutor_code[50];
     char title[50];
-} tutor_profile;
+} tutor_profiles;
 
 typedef struct {
     char user_id[50];
@@ -75,8 +75,6 @@ void available_sessions_menu();
 void setup();
 
 void title_printer(char *title);
-
-int insert(char *filename, void *data, size_t size);
 
 int read(char *filename, char lines[][1000], int *num_lines);
 
@@ -164,7 +162,7 @@ void login_menu() {
 
         if (valid_user_id) {
             // use while loop to read the file line by line
-            while (fscanf(users_file, "%s %s %s %s %s \n", user.user_id, user.name, user.password,
+            while (fscanf(users_file, "%[^;];%[^;];%[^;];%[^;];%[^;];\n", user.user_id, user.name, user.password,
                           user.email, user.role) != EOF) {
                 if (strcmp(user.user_id, user_id) == 0 && strcmp(user.password, password) == 0) {
                     authenticated = 1;
@@ -340,7 +338,7 @@ void add_user_menu() {
     }
 
     if (strcmp(user.role, "tutor") == 0) {
-        tutor_profile tutor;
+        tutor_profiles tutor;
         char tutor_code[50];
 
         printf("Please enter the tutor's title down below: \n");
@@ -354,33 +352,169 @@ void add_user_menu() {
 
         FILE *tutor_profile_file = fopen("tutor_profile.txt", "a");
 
-        fprintf(tutor_profile_file, "%s %s %s \n", tutor.user_id, tutor.tutor_code, tutor.title);
+        fprintf(tutor_profile_file, "%s;%s;%s;\n", tutor.user_id, tutor.tutor_code, tutor.title);
 
         fclose(tutor_profile_file);
     }
 
     FILE *users_file = fopen("users.txt", "a");
 
-    fprintf(users_file, "%s %s %s %s %s \n", user.user_id, user.name, user.password, user.email, user.role);
+    fprintf(users_file, "%s;%s;%s;%s;%s;\n", user.user_id, user.name, user.password, user.email, user.role);
 
     fclose(users_file);
 
     printf("User added successfully!\n");
-}
 
-void delete_user_menu() {
-    title_printer("User operation - Delete user");
 }
 
 void update_user_menu() {
     title_printer("User operation - Update user");
+
+    users user;
+
+    FILE *users_file = fopen("users.txt", "r");
+    char user_id[50];
+
+    printf("Please enter the user id of the user you want to update: \n");
+    scanf("%s", user_id);
+
+    // CHECK IF USER EXISTS
+    int user_exists = 0;
+    while (!feof(users_file)) {
+        char line[1000];
+        fgets(line, 1000, users_file);
+        char *token = strtok(line, " ");
+        if (strcmp(token, user_id) == 0) {
+            user_exists = 1;
+            break;
+        }
+    }
+}
+
+void delete_user_menu() {
+    title_printer("User operation - Delete user");
+
+    FILE *users_file = fopen("users.txt", "r");
+    char user_id[50];
+    int is_student = 0;
+    int is_tutor = 0;
+
+    printf("Please enter the user id of the user you want to delete: \n");
+    scanf("%s", user_id);
+
+    // CHECK IF USER EXISTS
+    int user_exists = 0;
+    while (!feof(users_file)) {
+        char line[1000];
+        fgets(line, 1000, users_file);
+        char *token = strtok(line, ";");
+        if (strcmp(token, user_id) == 0) {
+            user_exists = 1;
+            fclose(users_file);
+            break;
+        }
+    }
+
+    if (user_exists == 1) {
+        users user;
+
+        // delete user
+        FILE *temp_file = fopen("temp.txt", "w");
+        users_file = fopen("users.txt", "r");
+
+        while (fscanf(users_file, "%[^;];%[^;];%[^;];%[^;];%[^;];\n", user.user_id, user.name, user.password,
+                      user.email, user.role) != EOF) {
+            if (strcmp(user.user_id, user_id) != 0) {
+                fprintf(temp_file, "%s;%s;%s;%s;%s;\n", user.user_id, user.name, user.password, user.email, user.role);
+            } else {
+                if (strcmp(user.role, "student") == 0) {
+                    is_student = 1;
+                } else if (strcmp(user.role, "tutor") == 0) {
+                    is_tutor = 1;
+                }
+            }
+        }
+
+        fclose(users_file);
+        fclose(temp_file);
+
+        remove("users.txt");
+        rename("temp.txt", "users.txt");
+
+        if (is_student == 1) {
+            // delete student profile
+            FILE *student_profile_file = fopen("student_profile.txt", "r");
+            FILE *temp_student_profile_file = fopen("student_profile_temp.txt", "w");
+
+            student_profiles student;
+
+            while (fscanf(student_profile_file, "%[^;];%[^;];\n", student.user_id, student.student_code) != EOF) {
+                if (strcmp(student.user_id, user_id) != 0) {
+                    fprintf(temp_student_profile_file, "%s;%s;\n", student.user_id, student.student_code);
+                }
+            }
+
+            fclose(student_profile_file);
+            fclose(temp_file);
+
+            remove("student_profile.txt");
+            rename("student_profile_temp.txt", "student_profile.txt");
+        }
+
+        if (is_tutor == 1) {
+            // delete tutor profile
+            FILE *tutor_profile_file = fopen("tutor_profile.txt", "r");
+            FILE *temp_tutor_profile_file = fopen("tutor_profile_temp.txt", "w");
+
+            tutor_profiles tutor;
+
+            while (fscanf(tutor_profile_file, "%[^;];%[^;];%[^;];\n", tutor.user_id, tutor.tutor_code, tutor.title) !=
+                   EOF) {
+                if (strcmp(tutor.user_id, user_id) != 0) {
+                    fprintf(temp_tutor_profile_file, "%s;%s;%s;\n", tutor.user_id, tutor.tutor_code, tutor.title);
+                }
+            }
+
+            fclose(tutor_profile_file);
+            fclose(temp_file);
+
+            remove("tutor_profile.txt");
+            rename("tutor_profile_temp.txt", "tutor_profile.txt");
+        }
+    }
 }
 
 void view_user_menu() {
     title_printer("User operation - View user");
+
+    char lines[1000][1000];
+    int num_lines;
+    char *file_name = "users.txt";
+
+    int success = read(file_name, lines, &num_lines);
+
+    if (success) {
+        printf("User id\t\tName\t\tPassword\t\tEmail\t\tRole");
+
+        for (int i = 0; i < num_lines; i++) {
+            printf("%s", lines[i]);
+        }
+    } else {
+        printf("No users found.\n");
+    }
+
+
 }
 
-void session_operation_menu() {}
+void session_operation_menu() {
+    title_printer("Session operation");
+
+    printf("1. Add session.\n");
+    printf("2. Update session.\n");
+    printf("3. Delete session.\n");
+    printf("4. View session.\n");
+    printf("5. Enroll user.\n");
+}
 
 // Tutor menus
 void tutor_dashboard_menu(users user) {
@@ -452,7 +586,7 @@ void setup() {
     // sessions.txt
     for (int i = 0; i < 5; i++) {
         for (int j = 0; j < 6; j++) {
-            fprintf(sessions_file, "%s ", default_sessions[i][j]);
+            fprintf(sessions_file, "%s;", default_sessions[i][j]);
         }
         fprintf(sessions_file, "\n");
     }
@@ -460,7 +594,7 @@ void setup() {
     // users.txt
     for (int i = 0; i < 6; i++) {
         for (int j = 0; j < 5; j++) {
-            fprintf(users_file, "%s ", default_users[i][j]);
+            fprintf(users_file, "%s;", default_users[i][j]);
         }
         fprintf(users_file, "\n");
     }
@@ -468,7 +602,7 @@ void setup() {
     // tutor_profile.txt
     for (int i = 0; i < 5; i++) {
         for (int j = 0; j < 3; j++) {
-            fprintf(tutor_profile_file, "%s ", default_tutor_profiles[i][j]);
+            fprintf(tutor_profile_file, "%s;", default_tutor_profiles[i][j]);
         }
         fprintf(tutor_profile_file, "\n");
     }
@@ -477,27 +611,6 @@ void setup() {
     fclose(enrolled_sessions_file);
     fclose(users_file);
     fclose(tutor_profile_file);
-}
-
-int insert(char *filename, void *data, size_t size) {
-    /*  Usages
-     *  users user = {"981255", "John", "123456", "admin@apu.edu.my admin"};
-     *  int response = insert("users.txt", (void *) &user, sizeof(users));
-     *  printf("response: %d", response);
-     * */
-
-    FILE *fp = fopen(filename, "a");
-
-    if (fp == NULL) {
-        printf("Error: could not open file %s\n", filename);
-        return 0;
-    }
-
-    fwrite(data, size, 1, fp);
-    fprintf(fp, "\n");
-
-    fclose(fp);
-    return 1;
 }
 
 int read(char *filename, char lines[][1000], int *num_lines) {
