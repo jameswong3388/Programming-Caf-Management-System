@@ -58,6 +58,8 @@ void update_user_menu();
 
 void delete_user_menu();
 
+void view_all_user_menu();
+
 void view_user_menu();
 
 // Menu functions -> Admin -> Session management
@@ -77,6 +79,18 @@ void setup();
 void title_printer(char *title);
 
 int read(char *filename, char lines[][1000], int *num_lines);
+
+int user_id_parser(char *user_id);
+
+sessions get_session(char *session_code);
+
+enrolled_sessions* get_enrolled_session(char *user_id, int *num_sessions);
+
+users get_user(char *user_id);
+
+student_profiles get_student_profile(char *user_id);
+
+tutor_profiles get_tutor_profile(char *user_id);
 
 /* Main function */
 int main() {
@@ -134,7 +148,6 @@ void login_menu() {
         rewind(users_file); // reset file pointer, since fscanf() will move the file pointer to the end of the file
         users user;
 
-        int valid_user_id = 0;
         char user_id[50];
         char password[50];
 
@@ -143,24 +156,9 @@ void login_menu() {
         printf("Please enter your password down below: \n");
         scanf("%s", password);
 
-        if ((user_id[0] == 'T' && user_id[1] == 'P') || (user_id[0] == 't' && user_id[1] == 'p')) {
-            valid_user_id = 1;
-            for (int i = 0; i < 50; i++) {
-                user_id[i] = user_id[i + 2];
-            }
-        } else if ((user_id[0] == 'T') || (user_id[0] == 't')) {
-            valid_user_id = 1;
-            for (int i = 0; i < 50; i++) {
-                user_id[i] = user_id[i + 1];
-            }
-        } else if ((user_id[0] == 'A') || (user_id[0] == 'a')) {
-            valid_user_id = 1;
-            for (int i = 0; i < 50; i++) {
-                user_id[i] = user_id[i + 1];
-            }
-        }
+        int response = user_id_parser(user_id);
 
-        if (valid_user_id) {
+        if (response) {
             // use while loop to read the file line by line
             while (fscanf(users_file, "%[^;];%[^;];%[^;];%[^;];%[^;];\n", user.user_id, user.name, user.password,
                           user.email, user.role) != EOF) {
@@ -211,7 +209,6 @@ void admin_dashboard_menu(users user) {
     printf("2. Session operation.\n");
     printf("0. Logout\n");
 
-
     while (1) {
         printf("Please select an option below: \n");
         if (scanf("%d", &option) != 1) {
@@ -243,7 +240,9 @@ void user_operation_menu(users user) {
     printf("1. Add user.\n");
     printf("2. Delete user.\n");
     printf("3. Update user.\n");
-    printf("4. View user.\n");
+    printf("4. View all user.\n");
+    printf("5 .View user profile.\n");
+
     printf("0. Back to dashboard.\n");
 
     while (1) {
@@ -265,6 +264,9 @@ void user_operation_menu(users user) {
                 update_user_menu();
                 return;
             case 4:
+                view_all_user_menu();
+                return;
+            case 5:
                 view_user_menu();
                 return;
             case 0:
@@ -275,8 +277,6 @@ void user_operation_menu(users user) {
                 break;
         }
     }
-
-
 }
 
 void add_user_menu() {
@@ -330,11 +330,11 @@ void add_user_menu() {
         strcat(student_code, user.user_id); // concatenate user.user_id to student_code
         strcpy(student.student_code, student_code); // copy the concatenated string to student.student_code
 
-        FILE *student_profile_file = fopen("student_profile.txt", "a");
+        FILE *student_profiless_file = fopen("student_profiles.txt", "a");
 
-        fprintf(student_profile_file, "%s;%s\n", student.user_id, student.student_code);
+        fprintf(student_profiless_file, "%s;%s\n", student.user_id, student.student_code);
 
-        fclose(student_profile_file);
+        fclose(student_profiless_file);
     }
 
     if (strcmp(user.role, "tutor") == 0) {
@@ -350,11 +350,11 @@ void add_user_menu() {
         strcat(tutor_code, user.user_id);
         strcpy(tutor.tutor_code, tutor_code);
 
-        FILE *tutor_profile_file = fopen("tutor_profile.txt", "a");
+        FILE *tutor_profiles_file = fopen("tutor_profiles.txt", "a");
 
-        fprintf(tutor_profile_file, "%s;%s;%s;\n", tutor.user_id, tutor.tutor_code, tutor.title);
+        fprintf(tutor_profiles_file, "%s;%s;%s;\n", tutor.user_id, tutor.tutor_code, tutor.title);
 
-        fclose(tutor_profile_file);
+        fclose(tutor_profiles_file);
     }
 
     FILE *users_file = fopen("users.txt", "a");
@@ -443,48 +443,48 @@ void delete_user_menu() {
 
         if (is_student == 1) {
             // delete student profile
-            FILE *student_profile_file = fopen("student_profile.txt", "r");
-            FILE *temp_student_profile_file = fopen("student_profile_temp.txt", "w");
+            FILE *student_profiles_file = fopen("student_profiles.txt", "r");
+            FILE *temp_student_profiles_file = fopen("student_profiles_temp.txt", "w");
 
             student_profiles student;
 
-            while (fscanf(student_profile_file, "%[^;];%[^;];\n", student.user_id, student.student_code) != EOF) {
+            while (fscanf(student_profiles_file, "%[^;];%[^;];\n", student.user_id, student.student_code) != EOF) {
                 if (strcmp(student.user_id, user_id) != 0) {
-                    fprintf(temp_student_profile_file, "%s;%s;\n", student.user_id, student.student_code);
+                    fprintf(temp_student_profiles_file, "%s;%s;\n", student.user_id, student.student_code);
                 }
             }
 
-            fclose(student_profile_file);
+            fclose(student_profiles_file);
             fclose(temp_file);
 
-            remove("student_profile.txt");
-            rename("student_profile_temp.txt", "student_profile.txt");
+            remove("student_profiles.txt");
+            rename("student_profiles_temp.txt", "student_profiles.txt");
         }
 
         if (is_tutor == 1) {
             // delete tutor profile
-            FILE *tutor_profile_file = fopen("tutor_profile.txt", "r");
-            FILE *temp_tutor_profile_file = fopen("tutor_profile_temp.txt", "w");
+            FILE *tutor_profiles_file = fopen("tutor_profiles.txt", "r");
+            FILE *temp_tutor_profiles_file = fopen("tutor_profiles_temp.txt", "w");
 
             tutor_profiles tutor;
 
-            while (fscanf(tutor_profile_file, "%[^;];%[^;];%[^;];\n", tutor.user_id, tutor.tutor_code, tutor.title) !=
+            while (fscanf(tutor_profiles_file, "%[^;];%[^;];%[^;];\n", tutor.user_id, tutor.tutor_code, tutor.title) !=
                    EOF) {
                 if (strcmp(tutor.user_id, user_id) != 0) {
-                    fprintf(temp_tutor_profile_file, "%s;%s;%s;\n", tutor.user_id, tutor.tutor_code, tutor.title);
+                    fprintf(temp_tutor_profiles_file, "%s;%s;%s;\n", tutor.user_id, tutor.tutor_code, tutor.title);
                 }
             }
 
-            fclose(tutor_profile_file);
+            fclose(tutor_profiles_file);
             fclose(temp_file);
 
-            remove("tutor_profile.txt");
-            rename("tutor_profile_temp.txt", "tutor_profile.txt");
+            remove("tutor_profiles.txt");
+            rename("tutor_profiles_temp.txt", "tutor_profiles.txt");
         }
     }
 }
 
-void view_user_menu() {
+void view_all_user_menu() {
     title_printer("User operation - View user");
 
     char lines[1000][1000];
@@ -502,8 +502,63 @@ void view_user_menu() {
     } else {
         printf("No users found.\n");
     }
+}
 
+void view_user_menu() {
+    title_printer("User operation - View user");
 
+    FILE *users_file = fopen("users.txt", "r");
+    char user_id[50];
+
+    printf("Please enter the user id of the user you want to view: \n");
+    scanf("%s", user_id);
+
+    int response = user_id_parser(user_id);
+
+    if (response == 0) {
+        printf("Invalid user id.\n");
+        return;
+    }
+
+    // CHECK IF USER EXISTS
+    int user_exists = 0;
+    while (!feof(users_file)) {
+        char line[1000];
+        fgets(line, 1000, users_file);
+        char *token = strtok(line, ";");
+        if (strcmp(token, user_id) == 0) {
+            user_exists = 1;
+            fclose(users_file);
+            break;
+        }
+    }
+
+    // PRINT USER INFO
+    if (user_exists) {
+        users user = get_user(user_id);
+        printf("User id: %s \n", user.user_id);
+        printf("Name: %s \n", user.name);
+        printf("Email: %s \n", user.email);
+        printf("Role: %s \n", user.role);
+
+        if (strcmp(user.role, "student") == 0) {
+            student_profiles student = get_student_profile(user_id);
+            printf("Student code: %s \n", student.student_code);
+        } else if (strcmp(user.role, "tutor") == 0) {
+            tutor_profiles tutor = get_tutor_profile(user_id);
+            printf("Tutor code: %s \n", tutor.tutor_code);
+            printf("Title: %s \n", tutor.title);
+        }
+
+        int num_sessions = 0;
+        enrolled_sessions *sessions = get_enrolled_session(user_id, &num_sessions);
+
+        printf("Sessions enrolled in: \n");
+        for (int i = 0; i < num_sessions; i++) {
+            printf("Line %d: %s %s %s %s\n", i + 1, sessions[i].session_code, sessions[i].user_id, sessions[i].name, sessions[i].role);
+        }
+
+    }
 }
 
 void session_operation_menu() {
@@ -518,7 +573,7 @@ void session_operation_menu() {
 
 // Tutor menus
 void tutor_dashboard_menu(users user) {
-    printf("1. View sessions.\n");
+    printf("1. View my sessions.\n");
     printf("2. View students enrolled in sessions.\n");
 }
 
@@ -554,8 +609,8 @@ void setup() {
     FILE *sessions_file = fopen("sessions.txt", "w");
     FILE *enrolled_sessions_file = fopen("enrolled_sessions.txt", "w");
     FILE *users_file = fopen("users.txt", "w");
-    FILE *tutor_profile_file = fopen("tutor_profile.txt", "w");
-    FILE *student_profile_file = fopen("student_profile.txt", "w");
+    FILE *tutor_profiles_file = fopen("tutor_profiles.txt", "w");
+    FILE *student_profiles_file = fopen("student_profiles.txt", "w");
 
     char default_sessions[5][6][50] = {
             {"PYP101", "Python Programming",  "Saturday", "9.00am", "C-01-01", "T265663"},
@@ -563,6 +618,14 @@ void setup() {
             {"CSC103", "C Programming",       "Saturday", "2.00pm", "C-01-03", "T544654"},
             {"WEB104", "Web Development",     "Sunday",   "2.00pm", "C-01-04", "T577001"},
             {"CSP105", "C Sharp Programming", "Monday",   "7.00pm", "C-01-05", "T683357"}
+    };
+
+    char default_enrolled_sessions[5][4][50] = {
+            {"PYP101", "265663", "Mary",  "tutor"},
+            {"JAV102", "009650", "Peter",   "tutor"},
+            {"CSC103", "544654", "James",  "tutor"},
+            {"WEB104", "577001", "Johnny",  "tutor"},
+            {"CSP105", "683357", "David", "tutor"},
     };
 
     char default_users[6][5][50] = {
@@ -574,7 +637,7 @@ void setup() {
             {"683357", "David",  "123456", "david@apu.edu.my", "tutor"}
     };
 
-    char default_tutor_profiles[5][3][50] = {
+    char default_tutor_profiless[5][3][50] = {
             {"265663", "T265663", "Python Programming"},
             {"009650", "T009650", "Java Programming"},
             {"544654", "T544654", "C Programming"},
@@ -591,6 +654,14 @@ void setup() {
         fprintf(sessions_file, "\n");
     }
 
+    // enrolled_sessions.txt
+    for (int i = 0; i < 5; i++) {
+        for (int j = 0; j < 4; j++) {
+            fprintf(enrolled_sessions_file, "%s;", default_enrolled_sessions[i][j]);
+        }
+        fprintf(enrolled_sessions_file, "\n");
+    }
+
     // users.txt
     for (int i = 0; i < 6; i++) {
         for (int j = 0; j < 5; j++) {
@@ -599,18 +670,19 @@ void setup() {
         fprintf(users_file, "\n");
     }
 
-    // tutor_profile.txt
+    // tutor_profiles.txt
     for (int i = 0; i < 5; i++) {
         for (int j = 0; j < 3; j++) {
-            fprintf(tutor_profile_file, "%s;", default_tutor_profiles[i][j]);
+            fprintf(tutor_profiles_file, "%s;", default_tutor_profiless[i][j]);
         }
-        fprintf(tutor_profile_file, "\n");
+        fprintf(tutor_profiles_file, "\n");
     }
 
     fclose(sessions_file);
     fclose(enrolled_sessions_file);
     fclose(users_file);
-    fclose(tutor_profile_file);
+    fclose(tutor_profiles_file);
+    fclose(student_profiles_file);
 }
 
 int read(char *filename, char lines[][1000], int *num_lines) {
@@ -636,6 +708,7 @@ int read(char *filename, char lines[][1000], int *num_lines) {
     return 1;
 }
 
+
 void title_printer(char *title) {
     // size_t guaranteed to be big enough to contain the size of the biggest object the host system can handle.
     size_t str_len = strlen(title); // strlen returned unsigned long long, so we need to use size_t
@@ -655,4 +728,265 @@ void title_printer(char *title) {
         printf("-");
     }
     printf("\n");
+}
+
+int user_id_parser(char *user_id) {
+    int valid_user_id = 0;
+
+    if ((user_id[0] == 'T' && user_id[1] == 'P') || (user_id[0] == 't' && user_id[1] == 'p')) {
+        valid_user_id = 1;
+        for (int i = 0; i < 50; i++) {
+            user_id[i] = user_id[i + 2];
+        }
+    } else if ((user_id[0] == 'T') || (user_id[0] == 't')) {
+        valid_user_id = 1;
+        for (int i = 0; i < 50; i++) {
+            user_id[i] = user_id[i + 1];
+        }
+    } else if ((user_id[0] == 'A') || (user_id[0] == 'a')) {
+        valid_user_id = 1;
+        for (int i = 0; i < 50; i++) {
+            user_id[i] = user_id[i + 1];
+        }
+    }
+
+    return valid_user_id;
+}
+
+sessions get_session(char *session_code) {
+    sessions s;
+    FILE *fp;
+    char buffer[255];
+
+    fp = fopen("sessions.txt", "r");
+    if (fp == NULL) {
+        printf("Error: failed to open sessions.txt\n");
+        return s;
+    }
+
+    while (fgets(buffer, sizeof(buffer), fp) != NULL) {
+        // remove the newline character from the buffer
+        buffer[strcspn(buffer, "\n")] = 0;
+
+        // split the buffer into fields using semicolon as delimiter
+        char *session_code_field = strtok(buffer, ";");
+        char *title_field = strtok(NULL, ";");
+        char *day_field = strtok(NULL, ";");
+        char *start_time_field = strtok(NULL, ";");
+        char *location_field = strtok(NULL, ";");
+        char *tutor_code_field = strtok(NULL, ";");
+
+        // check if the session code matches the input
+        if (strcmp(session_code_field, session_code) == 0) {
+            // copy the fields into the session struct
+            strcpy(s.session_code, session_code_field);
+            strcpy(s.title, title_field);
+            strcpy(s.day, day_field);
+            strcpy(s.start_time, start_time_field);
+            strcpy(s.location, location_field);
+            strcpy(s.tutor_code, tutor_code_field);
+
+            // close the file and return the session struct
+            fclose(fp);
+            return s;
+        }
+    }
+
+    // close the file if the input session code is not found
+    fclose(fp);
+
+    // return an empty session struct
+    return s;
+}
+
+enrolled_sessions* get_enrolled_session(char *user_id, int *num_sessions) {
+    enrolled_sessions *sessions = NULL;
+    FILE *fp;
+    char buffer[255];
+    int count = 0;
+
+    fp = fopen("enrolled_sessions.txt", "r");
+    if (fp == NULL) {
+        printf("Error: failed to open enrolled_sessions.txt\n");
+        return sessions;
+    }
+
+    // count the number of sessions the user is enrolled in
+    while (fgets(buffer, sizeof(buffer), fp) != NULL) {
+        // remove the newline character from the buffer
+        buffer[strcspn(buffer, "\n")] = 0;
+
+        // split the buffer into fields using semicolon as delimiter
+        char *session_code_field = strtok(buffer, ";");
+        char *user_id_field = strtok(NULL, ";");
+        char *name_field = strtok(NULL, ";");
+        char *role_field = strtok(NULL, ";");
+
+        // check if the user ID matches the input
+        if (strcmp(user_id_field, user_id) == 0) {
+            count++;
+        }
+    }
+
+    // allocate memory for the sessions array
+    sessions = (enrolled_sessions*) malloc(count * sizeof(enrolled_sessions));
+    if (sessions == NULL) {
+        printf("Error: failed to allocate memory\n");
+        return sessions;
+    }
+
+    // reset the file pointer to the beginning of the file
+    fseek(fp, 0, SEEK_SET);
+
+    // read the enrolled session information into the sessions array
+    int i = 0;
+    while (fgets(buffer, sizeof(buffer), fp) != NULL) {
+        // remove the newline character from the buffer
+        buffer[strcspn(buffer, "\n")] = 0;
+
+        // split the buffer into fields using semicolon as delimiter
+        char *session_code_field = strtok(buffer, ";");
+        char *user_id_field = strtok(NULL, ";");
+        char *name_field = strtok(NULL, ";");
+        char *role_field = strtok(NULL, ";");
+
+        // check if the user ID matches the input
+        if (strcmp(user_id_field, user_id) == 0) {
+            // copy the fields into the sessions struct
+            strcpy(sessions[i].session_code, session_code_field);
+            strcpy(sessions[i].user_id, user_id_field);
+            strcpy(sessions[i].name, name_field);
+            strcpy(sessions[i].role, role_field);
+
+            // increment the counter
+            i++;
+        }
+    }
+
+    // set the number of sessions found
+    *num_sessions = count;
+
+    // close the file and return the sessions array
+    fclose(fp);
+    return sessions;
+}
+
+users get_user(char *user_id) {
+    users u;
+    FILE *fp;
+    char buffer[255];
+
+    fp = fopen("users.txt", "r");
+    if (fp == NULL) {
+        printf("Error: failed to open users.txt\n");
+        return u;
+    }
+
+    while (fgets(buffer, sizeof(buffer), fp) != NULL) {
+        // remove the newline character from the buffer
+        buffer[strcspn(buffer, "\n")] = 0;
+
+        // split the buffer into fields using semicolon as delimiter
+        char *user_id_field = strtok(buffer, ";");
+        char *name_field = strtok(NULL, ";");
+        char *password_field = strtok(NULL, ";");
+        char *email_field = strtok(NULL, ";");
+        char *role_field = strtok(NULL, ";");
+
+        // check if the user ID matches the input
+        if (strcmp(user_id_field, user_id) == 0) {
+            // copy the fields into the user struct
+            strcpy(u.user_id, user_id_field);
+            strcpy(u.name, name_field);
+            strcpy(u.password, password_field);
+            strcpy(u.email, email_field);
+            strcpy(u.role, role_field);
+
+            // close the file and return the user struct
+            fclose(fp);
+            return u;
+        }
+    }
+
+    // close the file if the input user ID is not found
+    fclose(fp);
+
+    // return an empty user struct
+    return u;
+}
+
+student_profiles get_student_profile(char *user_id) {
+    student_profiles sp;
+    FILE *fp;
+    char buffer[255];
+
+    fp = fopen("student_profiles.txt", "r");
+    if (fp == NULL) {
+        printf("Error: failed to open student_profiles.txt\n");
+        return sp;
+    }
+
+    while (fgets(buffer, sizeof(buffer), fp) != NULL) {
+        // remove the newline character from the buffer
+        buffer[strcspn(buffer, "\n")] = 0;
+
+        // split the buffer into fields using semicolon as delimiter
+        char *user_id_field = strtok(buffer, ";");
+        char *student_code_field = strtok(NULL, ";");
+
+        // check if the user ID matches the input
+        if (strcmp(user_id_field, user_id) == 0) {
+            // copy the fields into the student_profiles struct
+            strcpy(sp.user_id, user_id_field);
+            strcpy(sp.student_code, student_code_field);
+
+            // close the file and return the student_profiles struct
+            fclose(fp);
+            return sp;
+        }
+    }
+
+    // close the file if the input user ID is not found
+    fclose(fp);
+
+    // return an empty student_profiles struct
+    return sp;
+}
+
+tutor_profiles get_tutor_profile(char *user_id) {
+    tutor_profiles tp;
+    FILE *fp;
+    char buffer[255];
+
+    fp = fopen("tutor_profiles.txt", "r");
+    if (fp == NULL) {
+        printf("Error: failed to open tutor_profiles.txt\n");
+        return tp;
+    }
+
+    while (fgets(buffer, sizeof(buffer), fp) != NULL) {
+        // remove the newline character from the buffer
+        buffer[strcspn(buffer, "\n")] = 0;
+
+        // split the buffer into fields using semicolon as delimiter
+        char *user_id_field = strtok(buffer, ";");
+        char *tutor_code_field = strtok(NULL, ";");
+
+        // check if the user ID matches the input
+        if (strcmp(user_id_field, user_id) == 0) {
+            // copy the fields into the tutor_profiles struct
+            strcpy(tp.user_id, user_id_field);
+            strcpy(tp.tutor_code, tutor_code_field);
+
+            // close the file and return the tutor_profiles struct
+            fclose(fp);
+            return tp;
+        }
+    }
+
+    // close the file if the input user ID is not found
+    fclose(fp);
+
+    // return an empty tutor_profiles struct
+    return tp;
 }
