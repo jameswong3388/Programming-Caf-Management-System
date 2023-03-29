@@ -115,14 +115,13 @@ int main() {
 
 /* Menus */
 void home_menu() {
-    int option;
-
     title_printer("Welcome to APU Programming Cafe Management System!");
     printf("1. Login\n");
     printf("2. View available sessions\n");
     printf("0. Exit\n");
 
     while (1) {
+        int option;
         printf("Please select an option below: \n");
         if (scanf("%d", &option) != 1) {
             printf("Invalid input. Please enter a numeric integer.\n");
@@ -236,13 +235,12 @@ void dashboard_menu(users user) {
 
 // Admin menus
 void admin_dashboard_menu(users user) {
-    int option;
-
     printf("1. User operation\n");
     printf("2. Session operation.\n");
     printf("0. Logout\n");
 
     while (1) {
+        int option;
         printf("Please select an option below: \n");
         if (scanf("%d", &option) != 1) {
             printf("Invalid input. Please enter a numeric integer.\n");
@@ -269,7 +267,6 @@ void admin_dashboard_menu(users user) {
 
 // Admin menus -> User operation
 void user_operation_menu(users user) {
-    int option;
     title_printer("User operation");
     printf("1. Add user.\n");
     printf("2. Delete user.\n");
@@ -279,6 +276,7 @@ void user_operation_menu(users user) {
     printf("0. Back to dashboard.\n");
 
     while (1) {
+        int option;
         printf("Please select an option below: \n");
         if (scanf("%d", &option) != 1) {
             printf("Invalid input. Please enter a numeric integer.\n");
@@ -581,9 +579,8 @@ void session_operation_menu(users user) {
 
     printf("0. Back to main menu.\n");
 
-    int option;
-
     while (1) {
+        int option;
         printf("Please select an option below: \n");
         if (scanf("%d", &option) != 1) {
             printf("Invalid input. Please enter a numeric integer.\n");
