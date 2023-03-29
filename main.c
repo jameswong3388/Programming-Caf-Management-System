@@ -54,8 +54,6 @@ void user_operation_menu(users user);
 
 void add_user_menu();
 
-void update_user_menu();
-
 void delete_user_menu();
 
 void view_all_user_menu();
@@ -66,8 +64,6 @@ void view_user_menu();
 void session_operation_menu(users user);
 
 void add_session_menu();
-
-void update_session_menu();
 
 void delete_session_menu();
 
@@ -277,9 +273,8 @@ void user_operation_menu(users user) {
     title_printer("User operation");
     printf("1. Add user.\n");
     printf("2. Delete user.\n");
-    printf("3. Update user.\n");
-    printf("4. View all user.\n");
-    printf("5 .View user profile.\n");
+    printf("3. View all user.\n");
+    printf("4 .View user profile.\n");
 
     printf("0. Back to dashboard.\n");
 
@@ -299,12 +294,9 @@ void user_operation_menu(users user) {
                 delete_user_menu();
                 return;
             case 3:
-                update_user_menu();
-                return;
-            case 4:
                 view_all_user_menu();
                 return;
-            case 5:
+            case 4:
                 view_user_menu();
                 return;
             case 0:
@@ -402,15 +394,6 @@ void add_user_menu() {
     fclose(users_file);
 
     printf("User added successfully!\n");
-}
-
-void update_user_menu() {
-    title_printer("User operation - Update user");
-
-    char user_id[50];
-
-    printf("Please enter the user id of the user you want to update: \n");
-    scanf("%s", user_id);
 }
 
 void delete_user_menu() {
@@ -591,11 +574,10 @@ void session_operation_menu(users user) {
     title_printer("Session operation");
 
     printf("1. Add session.\n");
-    printf("2. Update session.\n");
-    printf("3. Delete session.\n");
-    printf("4. View session.\n");
-    printf("5. Enroll a user.\n");
-    printf("6. Disenroll a user.\n");
+    printf("2. Delete session.\n");
+    printf("3. View session.\n");
+    printf("4. Enroll a user.\n");
+    printf("5. Disenroll a user.\n");
 
     printf("0. Back to main menu.\n");
 
@@ -614,18 +596,15 @@ void session_operation_menu(users user) {
                 add_session_menu();
                 return; // exit the loop and return to the caller
             case 2:
-                update_session_menu();
-                return;
-            case 3:
                 delete_session_menu();
                 return;
-            case 4:
+            case 3:
                 view_session_menu();
                 return;
-            case 5:
+            case 4:
                 enroll_user_menu();
                 return;
-            case 6:
+            case 5:
                 disenroll_user_menu();
                 return;
             case 0:
@@ -683,8 +662,6 @@ void add_session_menu() {
     fclose(sessions_file);
     fclose(enrolled_sessions_file);
 }
-
-void update_session_menu() {}
 
 void delete_session_menu() {
     title_printer("Session operation - Delete session");
