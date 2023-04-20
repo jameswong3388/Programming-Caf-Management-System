@@ -44,44 +44,44 @@ void home_menu();
 
 void login_menu();
 
-void dashboard_menu(users user);
+void dashboard_menu(users session_user);
 
 // Menu functions -> Admin
-void admin_dashboard_menu(users user);
+void admin_dashboard_menu(users session_user);
 
 // Menu functions -> Admin -> User management
-void user_operation_menu(users user);
+void user_operation_menu(users session_user);
 
-void add_user_menu();
+void add_user_menu(users session_user);
 
-void delete_user_menu();
+void delete_user_menu(users session_user);
 
-void view_all_user_menu();
+void view_all_user_menu(users session_user);
 
-void view_user_menu();
+void view_user_menu(users session_user);
 
 // Menu functions -> Admin -> Session management
-void session_operation_menu(users user);
+void session_operation_menu(users session_user);
 
-void add_session_menu();
+void add_session_menu(users session_user);
 
-void delete_session_menu();
+void delete_session_menu(users session_user);
 
-void view_session_menu();
+void view_session_menu(users session_user);
 
-void enroll_user_menu();
+void enroll_user_menu(users session_user);
 
-void disenroll_user_menu();
+void disenroll_user_menu(users session_user);
 
 // Menu functions -> Tutor
-void tutor_dashboard_menu(users user);
+void tutor_dashboard_menu(users session_user);
 
-void view_my_sessions_menu(users user);
+void view_my_sessions_menu(users session_user);
 
-void view_students_enrolled_in_sessions_menu(users user);
+void view_students_enrolled_in_sessions_menu(users session_user);
 
 // Menu functions -> Student
-void student_dashboard_menu(users user);
+void student_dashboard_menu(users session_user);
 
 void available_sessions_menu();
 
@@ -219,22 +219,22 @@ void login_menu() {
     fclose(users_file);
 }
 
-void dashboard_menu(users user) {
+void dashboard_menu(users session_user) {
     title_printer("Dashboard");
-    printf("Welcome %s (%s) !\n", user.name, user.role);
-    if (strcmp(user.role, "student") == 0) {
-        student_dashboard_menu(user);
-    } else if (strcmp(user.role, "tutor") == 0) {
-        tutor_dashboard_menu(user);
-    } else if (strcmp(user.role, "admin") == 0) {
-        admin_dashboard_menu(user);
+    printf("Welcome %s (%s) !\n", session_user.name, session_user.role);
+    if (strcmp(session_user.role, "student") == 0) {
+        student_dashboard_menu(session_user);
+    } else if (strcmp(session_user.role, "tutor") == 0) {
+        tutor_dashboard_menu(session_user);
+    } else if (strcmp(session_user.role, "admin") == 0) {
+        admin_dashboard_menu(session_user);
     } else {
         printf("Invalid user role. Please try again.\n");
     }
 }
 
 // Admin menus
-void admin_dashboard_menu(users user) {
+void admin_dashboard_menu(users session_user) {
     printf("1. User operation\n");
     printf("2. Session operation.\n");
     printf("0. Logout\n");
@@ -250,10 +250,10 @@ void admin_dashboard_menu(users user) {
 
         switch (option) {
             case 1:
-                user_operation_menu(user);
+                user_operation_menu(session_user);
                 return;
             case 2:
-                session_operation_menu(user);
+                session_operation_menu(session_user);
                 return;
             case 0:
                 home_menu();
@@ -266,7 +266,7 @@ void admin_dashboard_menu(users user) {
 }
 
 // Admin menus -> User operation
-void user_operation_menu(users user) {
+void user_operation_menu(users session_user) {
     title_printer("User operation");
     printf("1. Add user.\n");
     printf("2. Delete user.\n");
@@ -286,19 +286,19 @@ void user_operation_menu(users user) {
 
         switch (option) {
             case 1:
-                add_user_menu();
+                add_user_menu(session_user);
                 return;
             case 2:
-                delete_user_menu();
+                delete_user_menu(session_user);
                 return;
             case 3:
-                view_all_user_menu();
+                view_all_user_menu(session_user);
                 return;
             case 4:
-                view_user_menu();
+                view_user_menu(session_user);
                 return;
             case 0:
-                dashboard_menu(user);
+                dashboard_menu(session_user);
                 return;
             default:
                 printf("Invalid option. Please try again.\n");
@@ -307,7 +307,7 @@ void user_operation_menu(users user) {
     }
 }
 
-void add_user_menu() {
+void add_user_menu(users session_user) {
     users user;
     title_printer("User operation - Add user");
     while (1) {
@@ -329,7 +329,7 @@ void add_user_menu() {
         if (strlen(user.user_id) == 6) {
             break;
         } else {
-            printf("User id must be at least 8 characters long. Please try again.\n");
+            printf("User id must be exactly 6 characters long. Please try again.\n");
         }
     }
 
@@ -392,9 +392,10 @@ void add_user_menu() {
     fclose(users_file);
 
     printf("User added successfully!\n");
+    session_operation_menu(session_user);
 }
 
-void delete_user_menu() {
+void delete_user_menu(users session_user) {
     title_printer("User operation - Delete user");
 
     FILE *users_file = fopen("users.txt", "r");
@@ -404,6 +405,13 @@ void delete_user_menu() {
 
     printf("Please enter the user id of the user you want to delete: \n");
     scanf("%s", user_id);
+
+    int response = user_id_parser(user_id);
+
+    if (response == 0) {
+        printf("Invalid user id.\n");
+        user_operation_menu(session_user);
+    }
 
     // CHECK IF USER EXISTS
     int user_exists = 0;
@@ -462,6 +470,8 @@ void delete_user_menu() {
 
             remove("student_profiles.txt");
             rename("student_profiles_temp.txt", "student_profiles.txt");
+
+            printf("User deleted successfully!\n");
         }
 
         if (is_tutor == 1) {
@@ -483,13 +493,17 @@ void delete_user_menu() {
 
             remove("tutor_profiles.txt");
             rename("tutor_profiles_temp.txt", "tutor_profiles.txt");
+
+            printf("User deleted successfully!\n");
         }
     } else {
         printf("User does not exist.\n");
     }
+
+    user_operation_menu(session_user);
 }
 
-void view_all_user_menu() {
+void view_all_user_menu(users session_user) {
     title_printer("User operation - View user");
 
     char lines[1000][1000];
@@ -499,7 +513,7 @@ void view_all_user_menu() {
     int success = read(file_name, lines, &num_lines);
 
     if (success) {
-        printf("User id\t\tName\t\tPassword\t\tEmail\t\tRole");
+        printf("User id;Name;Password;Email;Role\n");
 
         for (int i = 0; i < num_lines; i++) {
             printf("%s", lines[i]);
@@ -507,9 +521,10 @@ void view_all_user_menu() {
     } else {
         printf("No users found.\n");
     }
+    user_operation_menu(session_user);
 }
 
-void view_user_menu() {
+void view_user_menu(users session_user) {
     title_printer("User operation - View user");
 
     FILE *users_file = fopen("users.txt", "r");
@@ -522,7 +537,7 @@ void view_user_menu() {
 
     if (response == 0) {
         printf("Invalid user id.\n");
-        return;
+        user_operation_menu(session_user);
     }
 
     // CHECK IF USER EXISTS
@@ -565,10 +580,12 @@ void view_user_menu() {
         }
 
     }
+
+    user_operation_menu(session_user);
 }
 
 // Admin menus -> Session operation
-void session_operation_menu(users user) {
+void session_operation_menu(users session_user) {
     title_printer("Session operation");
 
     printf("1. Add session.\n");
@@ -590,22 +607,22 @@ void session_operation_menu(users user) {
 
         switch (option) {
             case 1:
-                add_session_menu();
+                add_session_menu(session_user);
                 return; // exit the loop and return to the caller
             case 2:
-                delete_session_menu();
+                delete_session_menu(session_user);
                 return;
             case 3:
-                view_session_menu();
+                view_session_menu(session_user);
                 return;
             case 4:
-                enroll_user_menu();
+                enroll_user_menu(session_user);
                 return;
             case 5:
-                disenroll_user_menu();
+                disenroll_user_menu(session_user);
                 return;
             case 0:
-                dashboard_menu(user);
+                dashboard_menu(session_user);
                 return;
             default:
                 printf("Invalid option. Please try again.\n");
@@ -614,7 +631,7 @@ void session_operation_menu(users user) {
     }
 }
 
-void add_session_menu() {
+void add_session_menu(users session_user) {
     title_printer("Session operation - Add session");
 
     FILE *sessions_file = fopen("sessions.txt", "a");
@@ -640,9 +657,15 @@ void add_session_menu() {
     printf("Enrolled a tutor into the session: \n");
     scanf("%s", session.tutor_code);
 
+    int response = user_id_parser(session.tutor_code);
+
+    if (response == 0) {
+        printf("Invalid user id.\n");
+        session_operation_menu(session_user);
+    }
+
     char user_id[50];
     strcpy(user_id, session.tutor_code);
-    user_id_parser(user_id);
 
     int num_sessions = 0;
     enrolled_sessions *sessions = get_enrolled_session(user_id, &num_sessions);
@@ -652,15 +675,20 @@ void add_session_menu() {
         fprintf(sessions_file, "%s;%s;%s;%s;%s;%s;\n", session.session_code, session.title, session.day,
                 session.start_time, session.location, session.tutor_code);
         fprintf(enrolled_sessions_file, "%s;%s;%s;%s;\n", session.session_code, user_id, tutor.name, tutor.role);
+
+        printf("Session added successfully!\n");
+
     } else {
         printf("Tutor does not exist or has reached the maximum number of sessions.\n");
     }
 
     fclose(sessions_file);
     fclose(enrolled_sessions_file);
+
+    session_operation_menu(session_user);
 }
 
-void delete_session_menu() {
+void delete_session_menu(users session_user) {
     title_printer("Session operation - Delete session");
 
     printf("Please enter the session code: \n");
@@ -668,6 +696,11 @@ void delete_session_menu() {
     scanf("%s", session_code);
 
     sessions session = get_session(session_code);
+
+    if (strcmp(session.session_code, "") == 0) {
+        printf("Session does not exist.\n");
+        session_operation_menu(session_user);
+    }
 
     FILE *sessions_file = fopen("sessions.txt", "r");
     FILE *temp_file = fopen("temp.txt", "w");
@@ -684,9 +717,12 @@ void delete_session_menu() {
 
     remove("sessions.txt");
     rename("temp.txt", "sessions.txt");
+
+    printf("Session deleted successfully!\n");
+    session_operation_menu(session_user);
 }
 
-void view_session_menu() {
+void view_session_menu(users session_user) {
     title_printer("Session operation - View session");
 
     printf("Please enter the session code: \n");
@@ -710,9 +746,11 @@ void view_session_menu() {
         printf("Line %d: %s %s %s %s\n", i + 1, sessions[i].session_code, sessions[i].user_id, sessions[i].name,
                sessions[i].role);
     }
+
+    session_operation_menu(session_user);
 }
 
-void enroll_user_menu() {
+void enroll_user_menu(users session_user) {
     title_printer("Session operation - Enroll user");
 
     FILE *enrolled_sessions_file = fopen("enrolled_sessions.txt", "a");
@@ -721,25 +759,32 @@ void enroll_user_menu() {
     char session_code[50];
     scanf("%s", session_code);
 
+    sessions session = get_session(session_code);
+
+    if (strcmp(session.session_code, "") == 0) {
+        printf("Session does not exist.\n");
+        session_operation_menu(session_user);
+    }
+
     printf("Please enter the user id: \n");
     char user_id[50];
     scanf("%s", user_id);
 
     users user = get_user(user_id);
 
+    if (strcmp(user.user_id, "") == 0) {
+        printf("User does not exist.\n");
+        session_operation_menu(session_user);
+    }
+
     if (strcmp(user.role, "tutor") == 0) {
         printf("Tutor cannot enroll into a session.\n");
-        return;
+        session_operation_menu(session_user);
     }
 
     int num_sessions = 0;
 
-    enrolled_sessions *sessions = get_enrolled_session(session_code, &num_sessions);
-
-    if (num_sessions < 1) {
-        printf("Session does not exist.\n");
-        return;
-    }
+    enrolled_sessions *sessions = get_enrolled_session(user_id, &num_sessions);
 
     for (int i = 0; i < num_sessions; i++) {
         if (strcmp(sessions[i].user_id, user_id) == 0) {
@@ -751,25 +796,42 @@ void enroll_user_menu() {
     fprintf(enrolled_sessions_file, "%s;%s;%s;%s;\n", session_code, user_id, user.name, user.role);
 
     fclose(enrolled_sessions_file);
+
+    printf("User enrolled successfully!\n");
+    session_operation_menu(session_user);
 }
 
-void disenroll_user_menu() {
+void disenroll_user_menu(users session_user) {
     title_printer("Session operation - Disenroll user");
 
     printf("Please enter the session code: \n");
     char session_code[50];
     scanf("%s", session_code);
 
+    sessions session = get_session(session_code);
+
+    if (strcmp(session.session_code, "") == 0) {
+        printf("Session does not exist.\n");
+        session_operation_menu(session_user);
+    }
+
     printf("Please enter the user id: \n");
     char user_id[50];
     scanf("%s", user_id);
 
+    users user = get_user(user_id);
+
+    if (strcmp(user.user_id, "") == 0) {
+        printf("User does not exist.\n");
+        session_operation_menu(session_user);
+    }
+
     int num_sessions = 0;
 
-    enrolled_sessions *sessions = get_enrolled_session(session_code, &num_sessions);
+    enrolled_sessions *sessions = get_enrolled_session(user_id, &num_sessions);
 
     if (num_sessions < 1) {
-        printf("Session does not exist.\n");
+        printf("Enrolled session does not exist.\n");
     }
 
     FILE *enrolled_sessions_file = fopen("enrolled_sessions.txt", "r");
@@ -787,10 +849,13 @@ void disenroll_user_menu() {
 
     remove("enrolled_sessions.txt");
     rename("temp.txt", "enrolled_sessions.txt");
+
+    printf("User disenrolled successfully!\n");
+    session_operation_menu(session_user);
 }
 
 // Tutor menus
-void tutor_dashboard_menu(users user) {
+void tutor_dashboard_menu(users session_user) {
     printf("1. View my sessions.\n");
     printf("2. View students enrolled in sessions.\n");
 
@@ -805,10 +870,10 @@ void tutor_dashboard_menu(users user) {
 
         switch (option) {
             case 1:
-                view_my_sessions_menu(user);
+                view_my_sessions_menu(session_user);
                 return;
             case 2:
-                view_students_enrolled_in_sessions_menu(user);
+                view_students_enrolled_in_sessions_menu(session_user);
                 return;
             default:
                 printf("Invalid choice.\n");
@@ -817,11 +882,11 @@ void tutor_dashboard_menu(users user) {
     }
 }
 
-void view_students_enrolled_in_sessions_menu(users user) {
+void view_students_enrolled_in_sessions_menu(users session_user) {
     title_printer("View students enrolled in sessions");
 
     int num_sessions = 0;
-    enrolled_sessions *sessions = get_enrolled_session(user.user_id, &num_sessions);
+    enrolled_sessions *sessions = get_enrolled_session(session_user.user_id, &num_sessions);
 
     printf("Enrolled sessions: \n");
     for (int i = 0; i < num_sessions; i++) {
@@ -830,10 +895,12 @@ void view_students_enrolled_in_sessions_menu(users user) {
                    sessions[i].role);
         }
     }
+
+    tutor_dashboard_menu(session_user);
 }
 
 // Student menus
-void student_dashboard_menu(users user) {
+void student_dashboard_menu(users session_user) {
     printf("1. View my sessions.\n");
 
     while (1) {
@@ -848,7 +915,7 @@ void student_dashboard_menu(users user) {
 
         switch (option) {
             case 1:
-                view_my_sessions_menu(user);
+                view_my_sessions_menu(session_user);
                 return;
             default:
                 printf("Invalid choice.\n");
@@ -857,17 +924,19 @@ void student_dashboard_menu(users user) {
     }
 }
 
-void view_my_sessions_menu(users user) {
+void view_my_sessions_menu(users session_user) {
     title_printer("View my sessions");
 
     int num_sessions = 0;
-    enrolled_sessions *sessions = get_enrolled_session(user.user_id, &num_sessions);
+    enrolled_sessions *sessions = get_enrolled_session(session_user.user_id, &num_sessions);
 
     printf("Enrolled sessions: \n");
     for (int i = 0; i < num_sessions; i++) {
         printf("Line %d: %s %s %s %s\n", i + 1, sessions[i].session_code, sessions[i].user_id, sessions[i].name,
                sessions[i].role);
     }
+
+    student_dashboard_menu(session_user);
 }
 
 /* APIs */
@@ -913,6 +982,10 @@ void setup() {
             {"683357", "T683357", "C Sharp Programming"}
     };
 
+    char default_student_profiles[1][2][50] = {
+            {"072187", "TP072187"}
+    };
+
     // Seed
     // sessions.txt
     for (int i = 0; i < 5; i++) {
@@ -944,6 +1017,14 @@ void setup() {
             fprintf(tutor_profiles_file, "%s;", default_tutor_profiless[i][j]);
         }
         fprintf(tutor_profiles_file, "\n");
+    }
+
+    // student_profiles.txt
+    for (int i = 0; i < 1; i++) {
+        for (int j = 0; j < 2; j++) {
+            fprintf(student_profiles_file, "%s;", default_student_profiles[i][j]);
+        }
+        fprintf(student_profiles_file, "\n");
     }
 
     fclose(sessions_file);
