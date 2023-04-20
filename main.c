@@ -44,6 +44,8 @@ void home_menu();
 
 void login_menu();
 
+void available_sessions_menu();
+
 void dashboard_menu(users session_user);
 
 // Menu functions -> Admin
@@ -83,7 +85,7 @@ void view_students_enrolled_in_sessions_menu(users session_user);
 // Menu functions -> Student
 void student_dashboard_menu(users session_user);
 
-void available_sessions_menu();
+void enroll_into_session_menu(users session_user);
 
 // API functions
 void setup();
@@ -891,12 +893,14 @@ void view_students_enrolled_in_sessions_menu(users session_user) {
         }
     }
 
-    tutor_dashboard_menu(session_user);
+    dashboard_menu(session_user);
 }
 
 // Student menus
 void student_dashboard_menu(users session_user) {
     printf("1. View my sessions.\n");
+    printf("2. Enroll into session.\n");
+    printf("0. Logout.\n");
 
     while (1) {
         int option;
@@ -907,10 +911,15 @@ void student_dashboard_menu(users session_user) {
             continue;
         }
 
-
         switch (option) {
             case 1:
                 view_my_sessions_menu(session_user);
+                return;
+            case 2:
+                enroll_into_session_menu(session_user);
+                return;
+            case 0:
+                home_menu();
                 return;
             default:
                 printf("Invalid choice.\n");
@@ -931,7 +940,59 @@ void view_my_sessions_menu(users session_user) {
                sessions[i].role);
     }
 
-    student_dashboard_menu(session_user);
+    dashboard_menu(session_user);
+}
+
+void enroll_into_session_menu(users session_user) {
+    title_printer("Enroll into session");
+
+    char lines[1000][1000];
+    int num_lines;
+
+    char *file_name = "sessions.txt";
+    int success = read(file_name, lines, &num_lines);
+
+    if (!success) {
+        printf("Error reading file %s\n", file_name);
+        return;
+    } else {
+        for (int i = 0; i < num_lines; i++) {
+            printf("Line %d: %s", i + 1, lines[i]);
+        }
+    }
+
+    printf("Please enter the session code: \n");
+    char session_code[50];
+    scanf("%s", session_code);
+
+    sessions session = get_session(session_code);
+
+    if (strcmp(session.session_code, "") == 0) {
+        printf("Session does not exist.\n");
+        dashboard_menu(session_user);
+    }
+
+    int num_sessions = 0;
+
+    enrolled_sessions *enrolled_session = get_enrolled_session(session_user.user_id, &num_sessions);
+
+    for (int i = 0; i < num_sessions; i++) {
+        if (strcmp(enrolled_session[i].session_code, session_code) == 0) {
+            printf("You have already enrolled into this session.\n");
+            dashboard_menu(session_user);
+        }
+    }
+
+    FILE *enrolled_sessions_file = fopen("enrolled_sessions.txt", "a");
+
+    fprintf(enrolled_sessions_file, "%s;%s;%s;%s;\n", session.session_code, session_user.user_id, session_user.name,
+            session_user.role);
+
+    fclose(enrolled_sessions_file);
+
+    printf("You have successfully enrolled into %s.\n", session.title);
+
+    dashboard_menu(session_user);
 }
 
 /* APIs */
@@ -1335,3 +1396,4 @@ tutor_profiles get_tutor_profile(char *user_id) {
     // return an empty tutor_profiles struct
     return tp;
 }
+
