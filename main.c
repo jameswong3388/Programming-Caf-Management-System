@@ -92,7 +92,7 @@ void title_printer(char *title);
 
 int read(char *filename, char lines[][1000], int *num_lines);
 
-int user_id_parser(char *user_id);
+int user_code_parser(char *user_id);
 
 sessions get_session(char *session_code);
 
@@ -188,7 +188,7 @@ void login_menu() {
         printf("Please enter your password down below: \n");
         scanf("%s", password);
 
-        int response = user_id_parser(user_id);
+        int response = user_code_parser(user_id);
 
         if (response) {
             // use while loop to read the file line by line
@@ -403,10 +403,10 @@ void delete_user_menu(users session_user) {
     printf("Please enter the user id of the user you want to delete: \n");
     scanf("%s", user_id);
 
-    int response = user_id_parser(user_id);
+    int response = user_code_parser(user_id);
 
     if (response == 0) {
-        printf("Invalid user id.\n");
+        printf("Invalid user code.\n");
         user_operation_menu(session_user);
     }
 
@@ -425,7 +425,8 @@ void delete_user_menu(users session_user) {
         while (fscanf(users_file, "%[^;];%[^;];%[^;];%[^;];%[^;];\n", user.user_id, user.name, user.password,
                       user.email, user.role) != EOF) {
             if (strcmp(user.user_id, user_id) != 0) {
-                fprintf(users_temp_file, "%s;%s;%s;%s;%s;\n", user.user_id, user.name, user.password, user.email, user.role);
+                fprintf(users_temp_file, "%s;%s;%s;%s;%s;\n", user.user_id, user.name, user.password, user.email,
+                        user.role);
             } else {
                 if (strcmp(user.role, "student") == 0) {
                     is_student = 1;
@@ -516,10 +517,10 @@ void view_user_menu(users session_user) {
 
     char user_id[50];
 
-    printf("Please enter the user id of the user you want to view: \n");
+    printf("Please enter the user code of the user you want to view: \n");
     scanf("%s", user_id);
 
-    int response = user_id_parser(user_id);
+    int response = user_code_parser(user_id);
 
     if (response == 0) {
         printf("Invalid user id.\n");
@@ -632,10 +633,10 @@ void add_session_menu(users session_user) {
     printf("Enrolled a tutor into the session: \n");
     scanf("%s", session.tutor_code);
 
-    int response = user_id_parser(session.tutor_code);
+    int response = user_code_parser(session.tutor_code);
 
     if (response == 0) {
-        printf("Invalid user id.\n");
+        printf("Invalid user code.\n");
         session_operation_menu(session_user);
     }
 
@@ -746,9 +747,16 @@ void enroll_user_menu(users session_user) {
         session_operation_menu(session_user);
     }
 
-    printf("Please enter the user id: \n");
+    printf("Please enter the user code: \n");
     char user_id[50];
     scanf("%s", user_id);
+
+    int response = user_code_parser(user_id);
+
+    if (response == 0) {
+        printf("Invalid user code.\n");
+        session_operation_menu(session_user);
+    }
 
     users user = get_user(user_id);
 
@@ -798,6 +806,13 @@ void disenroll_user_menu(users session_user) {
     printf("Please enter the user id: \n");
     char user_id[50];
     scanf("%s", user_id);
+
+    int response = user_code_parser(user_id);
+
+    if (response == 0) {
+        printf("Invalid user code.\n");
+        session_operation_menu(session_user);
+    }
 
     users user = get_user(user_id);
 
@@ -1059,10 +1074,11 @@ void title_printer(char *title) {
     printf("\n");
 }
 
-int user_id_parser(char *user_id) {
+int user_code_parser(char *user_id) {
     int valid_user_id = 0;
 
-    if ((user_id[0] == 'T' && user_id[1] == 'P') || (user_id[0] == 't' && user_id[1] == 'p')) {
+    if ((user_id[0] == 'T' && user_id[1] == 'P') || (user_id[0] == 't' && user_id[1] == 'p') ||
+        (user_id[0] == 't' && user_id[1] == 'P') || (user_id[0] == 'T' && user_id[1] == 'p')) {
         valid_user_id = 1;
         for (int i = 0; i < 50; i++) {
             user_id[i] = user_id[i + 2];
