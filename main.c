@@ -358,11 +358,11 @@ void add_user_menu(users session_user) {
         strcat(student_code, user.user_id); // concatenate user.user_id to student_code
         strcpy(student.student_code, student_code); // copy the concatenated string to student.student_code
 
-        FILE *student_profiless_file = fopen("student_profiles.txt", "a");
+        FILE *student_profiles_file = fopen("student_profiles.txt", "a");
 
-        fprintf(student_profiless_file, "%s;%s\n", student.user_id, student.student_code);
+        fprintf(student_profiles_file, "%s;%s\n", student.user_id, student.student_code);
 
-        fclose(student_profiless_file);
+        fclose(student_profiles_file);
     }
 
     if (strcmp(user.role, "tutor") == 0) {
@@ -969,7 +969,7 @@ void setup() {
             {"072187", "Jammie", "123456", "jamie@apu.edu.my", "student"}
     };
 
-    char default_tutor_profiless[5][3][50] = {
+    char default_tutor_profiles[5][3][50] = {
             {"265663", "T265663", "Python Programming"},
             {"009650", "T009650", "Java Programming"},
             {"544654", "T544654", "C Programming"},
@@ -1009,7 +1009,7 @@ void setup() {
     // tutor_profiles.txt
     for (int i = 0; i < 5; i++) {
         for (int j = 0; j < 3; j++) {
-            fprintf(tutor_profiles_file, "%s;", default_tutor_profiless[i][j]);
+            fprintf(tutor_profiles_file, "%s;", default_tutor_profiles[i][j]);
         }
         fprintf(tutor_profiles_file, "\n");
     }
