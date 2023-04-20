@@ -398,10 +398,7 @@ void add_user_menu(users session_user) {
 void delete_user_menu(users session_user) {
     title_printer("User operation - Delete user");
 
-    FILE *users_file = fopen("users.txt", "r");
     char user_id[50];
-    int is_student = 0;
-    int is_tutor = 0;
 
     printf("Please enter the user id of the user you want to delete: \n");
     scanf("%s", user_id);
@@ -413,30 +410,22 @@ void delete_user_menu(users session_user) {
         user_operation_menu(session_user);
     }
 
-    // CHECK IF USER EXISTS
-    int user_exists = 0;
-    while (!feof(users_file)) {
-        char line[1000];
-        fgets(line, 1000, users_file);
-        char *token = strtok(line, ";");
-        if (strcmp(token, user_id) == 0) {
-            user_exists = 1;
-            fclose(users_file);
-            break;
-        }
-    }
+    users user = get_user(user_id);
 
-    if (user_exists == 1) {
-        users user;
+    if (strcmp(user.user_id, "") == 0) {
+        printf("User does not exist.\n");
+        user_operation_menu(session_user);
+    } else {
+        FILE *users_temp_file = fopen("users_temp.txt", "w");
+        FILE *users_file = fopen("users.txt", "r");
 
-        // delete user
-        FILE *temp_file = fopen("temp.txt", "w");
-        users_file = fopen("users.txt", "r");
+        int is_student = 0;
+        int is_tutor = 0;
 
         while (fscanf(users_file, "%[^;];%[^;];%[^;];%[^;];%[^;];\n", user.user_id, user.name, user.password,
                       user.email, user.role) != EOF) {
             if (strcmp(user.user_id, user_id) != 0) {
-                fprintf(temp_file, "%s;%s;%s;%s;%s;\n", user.user_id, user.name, user.password, user.email, user.role);
+                fprintf(users_temp_file, "%s;%s;%s;%s;%s;\n", user.user_id, user.name, user.password, user.email, user.role);
             } else {
                 if (strcmp(user.role, "student") == 0) {
                     is_student = 1;
@@ -447,26 +436,26 @@ void delete_user_menu(users session_user) {
         }
 
         fclose(users_file);
-        fclose(temp_file);
+        fclose(users_temp_file);
 
         remove("users.txt");
-        rename("temp.txt", "users.txt");
+        rename("users_temp.txt", "users.txt");
 
         if (is_student == 1) {
             // delete student profile
             FILE *student_profiles_file = fopen("student_profiles.txt", "r");
-            FILE *temp_student_profiles_file = fopen("student_profiles_temp.txt", "w");
+            FILE *student_profiles_temp_file = fopen("student_profiles_temp.txt", "w");
 
             student_profiles student;
 
             while (fscanf(student_profiles_file, "%[^;];%[^;];\n", student.user_id, student.student_code) != EOF) {
                 if (strcmp(student.user_id, user_id) != 0) {
-                    fprintf(temp_student_profiles_file, "%s;%s;\n", student.user_id, student.student_code);
+                    fprintf(student_profiles_temp_file, "%s;%s;\n", student.user_id, student.student_code);
                 }
             }
 
             fclose(student_profiles_file);
-            fclose(temp_file);
+            fclose(student_profiles_temp_file);
 
             remove("student_profiles.txt");
             rename("student_profiles_temp.txt", "student_profiles.txt");
@@ -477,27 +466,25 @@ void delete_user_menu(users session_user) {
         if (is_tutor == 1) {
             // delete tutor profile
             FILE *tutor_profiles_file = fopen("tutor_profiles.txt", "r");
-            FILE *temp_tutor_profiles_file = fopen("tutor_profiles_temp.txt", "w");
+            FILE *tutor_profiles_temp_file = fopen("tutor_profiles_temp.txt", "w");
 
             tutor_profiles tutor;
 
             while (fscanf(tutor_profiles_file, "%[^;];%[^;];%[^;];\n", tutor.user_id, tutor.tutor_code, tutor.title) !=
                    EOF) {
                 if (strcmp(tutor.user_id, user_id) != 0) {
-                    fprintf(temp_tutor_profiles_file, "%s;%s;%s;\n", tutor.user_id, tutor.tutor_code, tutor.title);
+                    fprintf(tutor_profiles_temp_file, "%s;%s;%s;\n", tutor.user_id, tutor.tutor_code, tutor.title);
                 }
             }
 
             fclose(tutor_profiles_file);
-            fclose(temp_file);
+            fclose(tutor_profiles_temp_file);
 
             remove("tutor_profiles.txt");
             rename("tutor_profiles_temp.txt", "tutor_profiles.txt");
 
             printf("User deleted successfully!\n");
         }
-    } else {
-        printf("User does not exist.\n");
     }
 
     user_operation_menu(session_user);
@@ -527,7 +514,6 @@ void view_all_user_menu(users session_user) {
 void view_user_menu(users session_user) {
     title_printer("User operation - View user");
 
-    FILE *users_file = fopen("users.txt", "r");
     char user_id[50];
 
     printf("Please enter the user id of the user you want to view: \n");
@@ -540,22 +526,12 @@ void view_user_menu(users session_user) {
         user_operation_menu(session_user);
     }
 
-    // CHECK IF USER EXISTS
-    int user_exists = 0;
-    while (!feof(users_file)) {
-        char line[1000];
-        fgets(line, 1000, users_file);
-        char *token = strtok(line, ";");
-        if (strcmp(token, user_id) == 0) {
-            user_exists = 1;
-            fclose(users_file);
-            break;
-        }
-    }
+    users user = get_user(user_id);
 
-    // PRINT USER INFO
-    if (user_exists) {
-        users user = get_user(user_id);
+    if (strcmp(user.user_id, "") == 0) {
+        printf("User does not exist.\n");
+        user_operation_menu(session_user);
+    } else {
         printf("User id: %s \n", user.user_id);
         printf("Name: %s \n", user.name);
         printf("Email: %s \n", user.email);
@@ -578,7 +554,6 @@ void view_user_menu(users session_user) {
             printf("Line %d: %s %s %s %s\n", i + 1, sessions[i].session_code, sessions[i].user_id, sessions[i].name,
                    sessions[i].role);
         }
-
     }
 
     user_operation_menu(session_user);
@@ -703,20 +678,20 @@ void delete_session_menu(users session_user) {
     }
 
     FILE *sessions_file = fopen("sessions.txt", "r");
-    FILE *temp_file = fopen("temp.txt", "w");
+    FILE *sessions_temp_file = fopen("sessions_temp.txt", "w");
 
     char line[100];
     while (fgets(line, sizeof(line), sessions_file)) {
         if (strstr(line, session_code) == NULL) {
-            fprintf(temp_file, "%s", line);
+            fprintf(sessions_temp_file, "%s", line);
         }
     }
 
     fclose(sessions_file);
-    fclose(temp_file);
+    fclose(sessions_temp_file);
 
     remove("sessions.txt");
-    rename("temp.txt", "sessions.txt");
+    rename("sessions_temp.txt", "sessions.txt");
 
     printf("Session deleted successfully!\n");
     session_operation_menu(session_user);
@@ -730,6 +705,11 @@ void view_session_menu(users session_user) {
     scanf("%s", session_code);
 
     sessions session = get_session(session_code);
+
+    if (strcmp(session.session_code, "") == 0) {
+        printf("Session does not exist.\n");
+        session_operation_menu(session_user);
+    }
 
     printf("Session code: %s \n", session.session_code);
     printf("Session name: %s \n", session.title);
@@ -835,20 +815,20 @@ void disenroll_user_menu(users session_user) {
     }
 
     FILE *enrolled_sessions_file = fopen("enrolled_sessions.txt", "r");
-    FILE *temp_file = fopen("temp.txt", "w");
+    FILE *enrolled_sessions_temp_file = fopen("enrolled_sessions_temp.txt", "w");
 
     char line[100];
     while (fgets(line, sizeof(line), enrolled_sessions_file)) {
         if (strstr(line, session_code) == NULL) {
-            fprintf(temp_file, "%s", line);
+            fprintf(enrolled_sessions_temp_file, "%s", line);
         }
     }
 
     fclose(enrolled_sessions_file);
-    fclose(temp_file);
+    fclose(enrolled_sessions_temp_file);
 
     remove("enrolled_sessions.txt");
-    rename("temp.txt", "enrolled_sessions.txt");
+    rename("enrolled_sessions_temp.txt", "enrolled_sessions.txt");
 
     printf("User disenrolled successfully!\n");
     session_operation_menu(session_user);
