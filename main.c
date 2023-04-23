@@ -419,7 +419,7 @@ void add_user_menu(users session_user) {
     fclose(users_file);
 
     printf("[SERVER INFO] User added successfully!\n");
-    session_operation_menu(session_user);
+    user_operation_menu(session_user);
 }
 
 void delete_user_menu(users session_user) {
@@ -427,7 +427,7 @@ void delete_user_menu(users session_user) {
 
     char user_id[50];
 
-    printf("Please enter the user id of the user you want to delete: \n");
+    printf("Please enter the user code of the user you want to delete: \n");
     scanf("%s", user_id);
 
     int response = user_code_parser(user_id);
@@ -688,8 +688,16 @@ void add_session_menu(users session_user) {
 
     sessions session;
 
-    printf("Please enter the session code: \n");
-    scanf("%s", session.session_code);
+    while (1) {
+        printf("Please enter the session code: \n");
+        scanf("%s", session.session_code);
+
+        if (strlen(session.session_code) == 6) {
+            break;
+        } else {
+            printf("[SERVER WARNING] Session code must be 6 characters long.\n");
+        }
+    }
 
     printf("Please enter the session name: \n");
     scanf("%s", session.title);
@@ -718,6 +726,7 @@ void add_session_menu(users session_user) {
 
     int num_sessions = 0;
     users tutor = get_user(user_id);
+    enrolled_sessions *sessions = get_enrolled_sessions("user_id", user_id, &num_sessions);
 
     if (num_sessions < 1 && strcmp(tutor.role, "tutor") == 0) {
         fprintf(sessions_file, "%s;%s;%s;%s;%s;%s;\n", session.session_code, session.title, session.day,
@@ -752,6 +761,8 @@ void delete_session_menu(users session_user) {
 
     FILE *sessions_file = fopen("sessions.txt", "r");
     FILE *sessions_temp_file = fopen("sessions_temp.txt", "w");
+    FILE *enrolled_sessions_file = fopen("enrolled_sessions.txt", "r");
+    FILE *enrolled_sessions_temp_file = fopen("enrolled_sessions_temp.txt", "w");
 
     char line[100];
     while (fgets(line, sizeof(line), sessions_file)) {
@@ -760,11 +771,22 @@ void delete_session_menu(users session_user) {
         }
     }
 
+    while (fgets(line, sizeof(line), enrolled_sessions_file)) {
+        if (strstr(line, session_code) == NULL) {
+            fprintf(enrolled_sessions_temp_file, "%s", line);
+        }
+    }
+
     fclose(sessions_file);
     fclose(sessions_temp_file);
+    fclose(enrolled_sessions_file);
+    fclose(enrolled_sessions_temp_file);
 
     remove("sessions.txt");
     rename("sessions_temp.txt", "sessions.txt");
+
+    remove("enrolled_sessions.txt");
+    rename("enrolled_sessions_temp.txt", "enrolled_sessions.txt");
 
     printf("[SERVER INFO] Session deleted successfully!\n");
     session_operation_menu(session_user);
@@ -910,10 +932,17 @@ void disenroll_user_menu(users session_user) {
         session_operation_menu(session_user);
     }
 
+    if (strcmp(user.role, "tutor") == 0) {
+        printf("[SERVER ERROR] Tutor cannot be dis-enroll.\n");
+        session_operation_menu(session_user);
+    }
+
     int num_sessions = 0;
+    enrolled_sessions *sessions = get_enrolled_sessions("user_id", user_id, &num_sessions);
 
     if (num_sessions < 1) {
         printf("[SERVER ERROR] Enrolled session does not exist.\n");
+        session_operation_menu(session_user);
     }
 
     FILE *enrolled_sessions_file = fopen("enrolled_sessions.txt", "r");
@@ -1051,11 +1080,10 @@ void view_my_sessions_menu(users session_user) {
 
     if (num_sessions > 0) {
         for (int i = 0; i < num_sessions; i++) {
-
-                printf("| %-3d | %-7s | %-7s | %-15s | %-7s |\n",
-                       i + 1, sessions[i].session_code, sessions[i].user_id,
-                       sessions[i].name,
-                       sessions[i].role);
+            printf("| %-3d | %-7s | %-7s | %-15s | %-7s |\n",
+                   i + 1, sessions[i].session_code, sessions[i].user_id,
+                   sessions[i].name,
+                   sessions[i].role);
 
         }
     } else {
