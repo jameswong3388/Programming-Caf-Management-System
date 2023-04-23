@@ -209,7 +209,7 @@ void login_menu() {
         char user_id[50];
         char password[50];
 
-        printf("Please enter your User ID (TP number or Tutor code)  down below: \n");
+        printf("Please enter your User Code (TP number or Tutor code) down below: \n");
         scanf("%s", user_id);
         printf("Please enter your password down below: \n");
         scanf("%s", password);
@@ -914,7 +914,7 @@ void disenroll_user_menu(users session_user) {
         session_operation_menu(session_user);
     }
 
-    printf("Please enter the user id: \n");
+    printf("Please enter the user code: \n");
     char user_id[50];
     scanf("%s", user_id);
 
