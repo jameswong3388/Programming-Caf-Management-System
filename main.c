@@ -299,7 +299,6 @@ void user_operation_menu(users session_user) {
     printf("2. Delete user.\n");
     printf("3. View all user.\n");
     printf("4 .View user profile.\n");
-
     printf("0. Back to dashboard.\n");
 
     while (1) {
