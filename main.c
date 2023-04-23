@@ -92,7 +92,9 @@ void setup();
 
 void title_printer(char *title);
 
-int read(char *filename, char lines[][1000], int *num_lines);
+void dash_printer(int num);
+
+char **read(char *filename, int *num_lines);
 
 int user_code_parser(char *user_id);
 
@@ -150,20 +152,42 @@ void home_menu() {
 
 void available_sessions_menu() {
     title_printer("Available sessions");
-
-    char lines[1000][1000];
     int num_lines;
+    char **lines = read("sessions.txt", &num_lines);
 
-    char *file_name = "sessions.txt";
-    int success = read(file_name, lines, &num_lines);
+    sessions session;
 
-    if (!success) {
-        printf("[SERVER ERROR] Error reading file %s\n", file_name);
-        return;
-    } else {
+    if (lines != NULL) {
+        dash_printer(98);
+        printf("| %-3s | %-12s | %-25s | %-8s | %-10s | %-8s | %-10s |\n",
+               "No.", "Session Code", "Title", "Day", "Start Time", "Location", "Tutor Code");
+        dash_printer(98);
         for (int i = 0; i < num_lines; i++) {
-            printf("Line %d: %s", i + 1, lines[i]);
+            // split the line into tokens using strtok() then store them into the session struct
+            char *session_code = strtok(lines[i], ";");
+            char *title = strtok(NULL, ";");
+            char *day = strtok(NULL, ";");
+            char *start_time = strtok(NULL, ";");
+            char *location = strtok(NULL, ";");
+            char *tutor_code = strtok(NULL, ";");
+
+            strcpy(session.session_code, session_code);
+            strcpy(session.title, title);
+            strcpy(session.day, day);
+            strcpy(session.start_time, start_time);
+            strcpy(session.location, location);
+            strcpy(session.tutor_code, tutor_code);
+
+            printf("| %-3d | %-12s | %-25s | %-8s | %-10s | %-8s | %-10s |\n",
+                   i + 1, session.session_code, session.title, session.day, session.start_time, session.location,
+                   session.tutor_code);
         }
+        dash_printer(98);
+        // free memory allocated for lines
+        for (int i = 0; i < num_lines; i++) {
+            free(lines[i]);
+        }
+        free(lines);
     }
 
     home_menu();
@@ -497,21 +521,41 @@ void delete_user_menu(users session_user) {
 void view_all_user_menu(users session_user) {
     title_printer("User operation - View user");
 
-    char lines[1000][1000];
     int num_lines;
-    char *file_name = "users.txt";
+    char **lines = read("users.txt", &num_lines);
 
-    int success = read(file_name, lines, &num_lines);
+    users user;
 
-    if (success) {
-        printf("User id;Name;Password;Email;Role\n");
-
+    if (lines != NULL) {
+        dash_printer(91);
+        printf("| %-3s | %-7s | %-15s | %-20s | %-20s | %-7s |\n",
+               "No.", "User ID", "Name", "Password", "Email", "Role");
+        dash_printer(91);
         for (int i = 0; i < num_lines; i++) {
-            printf("%s", lines[i]);
+            // split the line into tokens using strtok() then store them into the session struct
+            char *user_id = strtok(lines[i], ";");
+            char *name = strtok(NULL, ";");
+            char *password = strtok(NULL, ";");
+            char *email = strtok(NULL, ";");
+            char *role = strtok(NULL, ";");
+
+            strcpy(user.user_id, user_id);
+            strcpy(user.name, name);
+            strcpy(user.password, password);
+            strcpy(user.email, email);
+            strcpy(user.role, role);
+
+            printf("| %-3d | %-7s | %-15s | %-20s | %-20s | %-7s |\n",
+                   i + 1, user.user_id, user.name, user.password, user.email, user.role);
         }
-    } else {
-        printf("[SERVER ERROR] No users found.\n");
+        dash_printer(91);
+        // free memory allocated for lines
+        for (int i = 0; i < num_lines; i++) {
+            free(lines[i]);
+        }
+        free(lines);
     }
+
     user_operation_menu(session_user);
 }
 
@@ -964,19 +1008,42 @@ void view_my_sessions_menu(users session_user) {
 void enroll_into_session_menu(users session_user) {
     title_printer("Enroll into session");
 
-    char lines[1000][1000];
     int num_lines;
+    char **lines = read("sessions.txt", &num_lines);
 
-    char *file_name = "sessions.txt";
-    int success = read(file_name, lines, &num_lines);
+    sessions available_session;
 
-    if (!success) {
-        printf("[SERVER ERROR] Error reading file %s\n", file_name);
-        return;
-    } else {
+    if (lines != NULL) {
+        dash_printer(98);
+        printf("| %-3s | %-12s | %-25s | %-8s | %-10s | %-8s | %-10s |\n",
+               "No.", "Session Code", "Title", "Day", "Start Time", "Location", "Tutor Code");
+        dash_printer(98);
         for (int i = 0; i < num_lines; i++) {
-            printf("Line %d: %s", i + 1, lines[i]);
+            // split the line into tokens using strtok() then store them into the session struct
+            char *session_code = strtok(lines[i], ";");
+            char *title = strtok(NULL, ";");
+            char *day = strtok(NULL, ";");
+            char *start_time = strtok(NULL, ";");
+            char *location = strtok(NULL, ";");
+            char *tutor_code = strtok(NULL, ";");
+
+            strcpy(available_session.session_code, session_code);
+            strcpy(available_session.title, title);
+            strcpy(available_session.day, day);
+            strcpy(available_session.start_time, start_time);
+            strcpy(available_session.location, location);
+            strcpy(available_session.tutor_code, tutor_code);
+
+            printf("| %-3d | %-12s | %-25s | %-8s | %-10s | %-8s | %-10s |\n",
+                   i + 1, available_session.session_code, available_session.title, available_session.day,
+                   available_session.start_time, available_session.location, available_session.tutor_code);
         }
+        dash_printer(98);
+        // free memory allocated for lines
+        for (int i = 0; i < num_lines; i++) {
+            free(lines[i]);
+        }
+        free(lines);
     }
 
     printf("Please enter the session code: \n");
@@ -1110,29 +1177,40 @@ void setup() {
     fclose(student_profiles_file);
 }
 
-int read(char *filename, char lines[][1000], int *num_lines) {
+char **read(char *filename, int *num_lines) {
+    char **lines = NULL;
     FILE *fp = fopen(filename, "r");
     if (fp == NULL) {
-        printf("[SERVER ERROR] could not open file %s\n", filename);
-        return 0;
+        printf("[SERVER ERROR] Failed to open file '%s'\n", filename);
+        return NULL;
     }
 
-    char line[1000];
-    int i = 0;
-    while (fgets(line, 1000, fp) != NULL) {
-        strcpy(lines[i], line);
-        i++;
-        if (i == 1000) {
-            printf("[SERVER ERROR] maximum number of lines exceeded\n");
-            break;
+    // count the number of lines in the file
+    int count = 0;
+    char c;
+    while ((c = fgetc(fp)) != EOF) {
+        if (c == '\n') {
+            count++;
         }
     }
-    *num_lines = i;
+    rewind(fp); // reset file pointer to beginning of file
+
+    // allocate memory for the lines array
+    lines = (char **) malloc(sizeof(char *) * count);
+    for (int i = 0; i < count; i++) {
+        lines[i] = (char *) malloc(sizeof(char) * 1024); // assuming max line length of 1024
+    }
+
+    // read each line from the file and store it in the lines array
+    int i = 0;
+    while (fgets(lines[i], 1024, fp) != NULL) {
+        i++;
+    }
 
     fclose(fp);
-    return 1;
+    *num_lines = count;
+    return lines;
 }
-
 
 void title_printer(char *title) {
     // size_t guaranteed to be big enough to contain the size of the biggest object the host system can handle.
@@ -1150,6 +1228,13 @@ void title_printer(char *title) {
 
     // print the bottom line
     for (int i = 0; i < line_len; i++) {
+        printf("-");
+    }
+    printf("\n");
+}
+
+void dash_printer(int num) {
+    for (int i = 0; i < num; i++) {
         printf("-");
     }
     printf("\n");
