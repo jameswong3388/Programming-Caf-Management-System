@@ -579,7 +579,7 @@ void view_user_menu(users session_user) {
         printf("[SERVER ERROR] User does not exist.\n");
         user_operation_menu(session_user);
     } else {
-        printf("## User details ##\n");
+        printf("## User Details ##\n");
         dash_printer(85);
         printf("| %-7s | %-15s | %-20s | %-20s | %-7s |\n",
                "User ID", "Name", "Password", "Email", "Role");
@@ -625,7 +625,6 @@ void view_user_menu(users session_user) {
             printf("| %-51s |\n", "No enrolled session.");
         }
         dash_printer(55);
-        printf("\n");
 
         free(sessions); // free the memory allocated to the array when it is no longer needed
     }
@@ -805,6 +804,7 @@ void view_session_menu(users session_user) {
         session_operation_menu(session_user);
     }
 
+    printf("## Session Details ##\n");
     dash_printer(92);
     printf("| %-12s | %-25s | %-8s | %-10s | %-8s | %-10s |\n",
            "Session Code", "Title", "Day", "Start Time", "Location", "Tutor Code");
@@ -832,7 +832,6 @@ void view_session_menu(users session_user) {
         printf("| %-51s |\n", "No enrolled user.");
     }
     dash_printer(55);
-    printf("\n");
 
     free(sessions);
 
@@ -1026,7 +1025,6 @@ void view_students_enrolled_in_sessions_menu(users session_user) {
         printf("| %-51s |\n", "No enrolled student.");
     }
     dash_printer(55);
-    printf("\n");
 
     free(enrolled_sessions);
 
@@ -1071,7 +1069,7 @@ void view_my_sessions_menu(users session_user) {
     int num_sessions = 0;
     enrolled_sessions *sessions = get_enrolled_sessions("user_id", session_user.user_id, &num_sessions);
 
-    printf("## Enrolled sessions ##\n");
+    printf("## Enrolled Sessions ##\n");
     dash_printer(55);
     printf("| %-3s | %-7s | %-7s | %-15s | %-7s |\n",
            "No.", "Session", "User ID", "Name", "Role");
@@ -1089,7 +1087,6 @@ void view_my_sessions_menu(users session_user) {
         printf("| %-51s |\n", "No enrolled session.");
     }
     dash_printer(55);
-    printf("\n");
 
     free(sessions);
 
