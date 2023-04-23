@@ -617,7 +617,7 @@ void view_user_menu(users session_user) {
                "No.", "Session", "User ID", "Name", "Role");
         dash_printer(55);
 
-        if (num_sessions > 1) {
+        if (num_sessions > 0) {
             for (int i = 0; i < num_sessions; i++) {
                 printf("| %-3d | %-7s | %-7s | %-15s | %-7s |\n",
                        i + 1, sessions[i].session_code, sessions[i].user_id, sessions[i].name, sessions[i].role);
@@ -802,7 +802,7 @@ void view_session_menu(users session_user) {
            "No.", "Session", "User ID", "Name", "Role");
     dash_printer(55);
 
-    if (num_sessions > 1) {
+    if (num_sessions > 0) {
         for (int i = 0; i < num_sessions; i++) {
             printf("| %-3d | %-7s | %-7s | %-15s | %-7s |\n",
                    i + 1, sessions[i].session_code, sessions[i].user_id, sessions[i].name, sessions[i].role);
@@ -985,11 +985,11 @@ void view_students_enrolled_in_sessions_menu(users session_user) {
            "No.", "Session", "User ID", "Name", "Role");
     dash_printer(55);
 
-    if (num_sessions > 1) {
+    if (num_sessions > 0) {
         for (int i = 0; i < num_sessions; i++) {
             if (strcmp(enrolled_sessions[i].role, "student") == 0) {
                 printf("| %-3d | %-7s | %-7s | %-15s | %-7s |\n",
-                       i + 1, enrolled_sessions[i].session_code, enrolled_sessions[i].user_id,
+                       i, enrolled_sessions[i].session_code, enrolled_sessions[i].user_id,
                        enrolled_sessions[i].name,
                        enrolled_sessions[i].role);
             }
@@ -1049,14 +1049,14 @@ void view_my_sessions_menu(users session_user) {
            "No.", "Session", "User ID", "Name", "Role");
     dash_printer(55);
 
-    if (num_sessions > 1) {
+    if (num_sessions > 0) {
         for (int i = 0; i < num_sessions; i++) {
-            if (strcmp(sessions[i].role, "student") == 0) {
+
                 printf("| %-3d | %-7s | %-7s | %-15s | %-7s |\n",
                        i + 1, sessions[i].session_code, sessions[i].user_id,
                        sessions[i].name,
                        sessions[i].role);
-            }
+
         }
     } else {
         printf("| %-51s |\n", "No enrolled session.");
