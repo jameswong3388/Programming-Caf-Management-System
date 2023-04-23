@@ -580,28 +580,53 @@ void view_user_menu(users session_user) {
         printf("[SERVER ERROR] User does not exist.\n");
         user_operation_menu(session_user);
     } else {
-        printf("User id: %s \n", user.user_id);
-        printf("Name: %s \n", user.name);
-        printf("Email: %s \n", user.email);
-        printf("Role: %s \n", user.role);
+        printf("## User details ##\n");
+        dash_printer(85);
+        printf("| %-7s | %-15s | %-20s | %-20s | %-7s |\n",
+               "User ID", "Name", "Password", "Email", "Role");
+        dash_printer(85);
+        printf("| %-7s | %-15s | %-20s | %-20s | %-7s |\n",
+               user.user_id, user.name, user.password, user.email, user.role);
+        dash_printer(85);
+        printf("\n");
 
+        printf("## User Profile ##\n");
         if (strcmp(user.role, "student") == 0) {
+            dash_printer(16);
             student_profiles student = get_student_profile(user_id);
-            printf("Student code: %s \n", student.student_code);
+            printf("| %-12s |\n", "Student Code");
+            dash_printer(16);
+            printf("| %-12s |\n", student.student_code);
+            dash_printer(16);
         } else if (strcmp(user.role, "tutor") == 0) {
             tutor_profiles tutor = get_tutor_profile(user_id);
-            printf("Tutor code: %s \n", tutor.tutor_code);
-            printf("Title: %s \n", tutor.title);
+            dash_printer(50);
+            printf("| %-10s | %-33s |\n", "Tutor Code", "Title");
+            dash_printer(50);
+            printf("| %-10s | %-33s |\n", tutor.tutor_code, tutor.title);
+            dash_printer(50);
         }
+        printf("\n");
 
         int num_sessions = 0;
         enrolled_sessions *sessions = get_enrolled_sessions("user_id", user_id, &num_sessions);
 
-        printf("Sessions enrolled in: \n");
-        for (int i = 0; i < num_sessions; i++) {
-            printf("Line %d: %s %s %s %s\n", i + 1, sessions[i].session_code, sessions[i].user_id, sessions[i].name,
-                   sessions[i].role);
+        printf("## Enrolled Sessions ##\n");
+        dash_printer(55);
+        printf("| %-3s | %-7s | %-7s | %-15s | %-7s |\n",
+               "No.", "Session", "User ID", "Name", "Role");
+        dash_printer(55);
+
+        if (num_sessions > 1) {
+            for (int i = 0; i < num_sessions; i++) {
+                printf("| %-3d | %-7s | %-7s | %-15s | %-7s |\n",
+                       i + 1, sessions[i].session_code, sessions[i].user_id, sessions[i].name, sessions[i].role);
+            }
+        } else {
+            printf("| %-51s |\n", "No enrolled session.");
         }
+        dash_printer(55);
+        printf("\n");
 
         free(sessions); // free the memory allocated to the array when it is no longer needed
     }
@@ -618,7 +643,6 @@ void session_operation_menu(users session_user) {
     printf("3. View session.\n");
     printf("4. Enroll a user.\n");
     printf("5. Disenroll a user.\n");
-
     printf("0. Back to main menu.\n");
 
     while (1) {
@@ -760,21 +784,34 @@ void view_session_menu(users session_user) {
         session_operation_menu(session_user);
     }
 
-    printf("Session code: %s \n", session.session_code);
-    printf("Session name: %s \n", session.title);
-    printf("Session description: %s \n", session.day);
-    printf("Session start time: %s \n", session.start_time);
-    printf("Session location: %s \n", session.location);
-    printf("Session tutor code: %s \n", session.tutor_code);
+    dash_printer(92);
+    printf("| %-12s | %-25s | %-8s | %-10s | %-8s | %-10s |\n",
+           "Session Code", "Title", "Day", "Start Time", "Location", "Tutor Code");
+    dash_printer(92);
+    printf("| %-12s | %-25s | %-8s | %-10s | %-8s | %-10s |\n", session.session_code, session.title, session.day,
+           session.start_time, session.location, session.tutor_code);
+    dash_printer(92);
+    printf("\n");
 
     int num_sessions = 0;
     enrolled_sessions *sessions = get_enrolled_sessions("session_code", session.session_code, &num_sessions);
 
-    printf("Enrolled users: \n");
-    for (int i = 0; i < num_sessions; i++) {
-        printf("Line %d: %s %s %s %s\n", i + 1, sessions[i].session_code, sessions[i].user_id, sessions[i].name,
-               sessions[i].role);
+    printf("## Enrolled Users ##\n");
+    dash_printer(55);
+    printf("| %-3s | %-7s | %-7s | %-15s | %-7s |\n",
+           "No.", "Session", "User ID", "Name", "Role");
+    dash_printer(55);
+
+    if (num_sessions > 1) {
+        for (int i = 0; i < num_sessions; i++) {
+            printf("| %-3d | %-7s | %-7s | %-15s | %-7s |\n",
+                   i + 1, sessions[i].session_code, sessions[i].user_id, sessions[i].name, sessions[i].role);
+        }
+    } else {
+        printf("| %-51s |\n", "No enrolled user.");
     }
+    dash_printer(55);
+    printf("\n");
 
     free(sessions);
 
@@ -942,14 +979,26 @@ void view_students_enrolled_in_sessions_menu(users session_user) {
     int num_sessions = 0;
     enrolled_sessions *enrolled_sessions = get_enrolled_sessions("session_code", session.session_code, &num_sessions);
 
-    printf("Enrolled sessions: \n");
-    for (int i = 0; i < num_sessions; i++) {
-        if (strcmp(enrolled_sessions[i].role, "student") == 0) {
-            printf("Line %d: %s %s %s %s\n", i + 1, enrolled_sessions[i].session_code, enrolled_sessions[i].user_id,
-                   enrolled_sessions[i].name,
-                   enrolled_sessions[i].role);
+    printf("## Enrolled Students ##\n");
+    dash_printer(55);
+    printf("| %-3s | %-7s | %-7s | %-15s | %-7s |\n",
+           "No.", "Session", "User ID", "Name", "Role");
+    dash_printer(55);
+
+    if (num_sessions > 1) {
+        for (int i = 0; i < num_sessions; i++) {
+            if (strcmp(enrolled_sessions[i].role, "student") == 0) {
+                printf("| %-3d | %-7s | %-7s | %-15s | %-7s |\n",
+                       i + 1, enrolled_sessions[i].session_code, enrolled_sessions[i].user_id,
+                       enrolled_sessions[i].name,
+                       enrolled_sessions[i].role);
+            }
         }
+    } else {
+        printf("| %-51s |\n", "No enrolled student.");
     }
+    dash_printer(55);
+    printf("\n");
 
     free(enrolled_sessions);
 
@@ -994,11 +1043,26 @@ void view_my_sessions_menu(users session_user) {
     int num_sessions = 0;
     enrolled_sessions *sessions = get_enrolled_sessions("user_id", session_user.user_id, &num_sessions);
 
-    printf("Enrolled sessions: \n");
-    for (int i = 0; i < num_sessions; i++) {
-        printf("Line %d: %s %s %s %s\n", i + 1, sessions[i].session_code, sessions[i].user_id, sessions[i].name,
-               sessions[i].role);
+    printf("## Enrolled sessions ##\n");
+    dash_printer(55);
+    printf("| %-3s | %-7s | %-7s | %-15s | %-7s |\n",
+           "No.", "Session", "User ID", "Name", "Role");
+    dash_printer(55);
+
+    if (num_sessions > 1) {
+        for (int i = 0; i < num_sessions; i++) {
+            if (strcmp(sessions[i].role, "student") == 0) {
+                printf("| %-3d | %-7s | %-7s | %-15s | %-7s |\n",
+                       i + 1, sessions[i].session_code, sessions[i].user_id,
+                       sessions[i].name,
+                       sessions[i].role);
+            }
+        }
+    } else {
+        printf("| %-51s |\n", "No enrolled session.");
     }
+    dash_printer(55);
+    printf("\n");
 
     free(sessions);
 
@@ -1118,11 +1182,11 @@ void setup() {
     };
 
     char default_tutor_profiles[5][3][50] = {
-            {"265663", "T265663", "Python Programming"},
-            {"009650", "T009650", "Java Programming"},
-            {"544654", "T544654", "C Programming"},
-            {"577001", "T577001", "Web Development"},
-            {"683357", "T683357", "C Sharp Programming"}
+            {"265663", "T265663", "Python Programming Tutor"},
+            {"009650", "T009650", "Java Programming Tutor"},
+            {"544654", "T544654", "C Programming Tutor"},
+            {"577001", "T577001", "Web Development Tutor"},
+            {"683357", "T683357", "C Sharp Programming Tutor"}
     };
 
     char default_student_profiles[1][2][50] = {
@@ -1218,19 +1282,13 @@ void title_printer(char *title) {
     size_t line_len = 4 + str_len;  // total line length is 4 + length of the string
 
     // print the top line
-    for (int i = 0; i < line_len; i++) {
-        printf("-");
-    }
-    printf("\n");
+    dash_printer(line_len);
 
     // print the string line
     printf("| %s |\n", title);
 
     // print the bottom line
-    for (int i = 0; i < line_len; i++) {
-        printf("-");
-    }
-    printf("\n");
+    dash_printer(line_len);
 }
 
 void dash_printer(int num) {
@@ -1506,12 +1564,14 @@ tutor_profiles get_tutor_profile(char *user_id) {
         // split the buffer into fields using semicolon as delimiter
         char *user_id_field = strtok(buffer, ";");
         char *tutor_code_field = strtok(NULL, ";");
+        char *title_field = strtok(NULL, ";");
 
         // check if the user ID matches the input
         if (strcmp(user_id_field, user_id) == 0) {
             // copy the fields into the tutor_profiles struct
             strcpy(tp.user_id, user_id_field);
             strcpy(tp.tutor_code, tutor_code_field);
+            strcpy(tp.title, title_field);
 
             // close the file and return the tutor_profiles struct
             fclose(fp);
