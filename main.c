@@ -2,40 +2,46 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* Macros */
+#define MAX_USER_ID_LENGTH 7
+#define MAX_SESSION_CODE_LENGTH 7
+#define MAX_USER_CODE_LENGTH 9
+#define MAX_STRING_LENGTH 128
+
 /* Data structure */
 typedef struct {
-    char session_code[50];
-    char title[50];
-    char day[50];
-    char start_time[50];
-    char location[50];
-    char tutor_code[50];
+    char session_code[MAX_SESSION_CODE_LENGTH];
+    char title[MAX_STRING_LENGTH];
+    char day[MAX_STRING_LENGTH];
+    char start_time[MAX_STRING_LENGTH];
+    char location[MAX_STRING_LENGTH];
+    char tutor_code[MAX_USER_CODE_LENGTH];
 } sessions;
 
 typedef struct {
-    char session_code[50];
-    char user_id[50];
-    char name[50];
-    char role[50];
+    char session_code[MAX_SESSION_CODE_LENGTH];
+    char user_id[MAX_USER_ID_LENGTH];
+    char name[MAX_STRING_LENGTH];
+    char role[MAX_STRING_LENGTH];
 } enrolled_sessions;
 
 typedef struct {
-    char user_id[50];
-    char name[50];
-    char password[50];
-    char email[50];
-    char role[50];
+    char user_id[MAX_USER_ID_LENGTH];
+    char name[MAX_STRING_LENGTH];
+    char password[MAX_STRING_LENGTH];
+    char email[MAX_STRING_LENGTH];
+    char role[MAX_STRING_LENGTH];
 } users;
 
 typedef struct {
-    char user_id[50];
-    char tutor_code[50];
-    char title[50];
+    char user_id[MAX_USER_ID_LENGTH];
+    char tutor_code[MAX_USER_CODE_LENGTH];
+    char title[MAX_STRING_LENGTH];
 } tutor_profiles;
 
 typedef struct {
-    char user_id[50];
-    char student_code[50];
+    char user_id[MAX_USER_ID_LENGTH];
+    char student_code[MAX_USER_CODE_LENGTH];
 } student_profiles;
 
 /* Functions declaration */
@@ -96,7 +102,7 @@ void dash_printer(int num);
 
 char **read(char *filename, int *num_lines);
 
-int user_code_parser(char *user_id);
+int user_code_parser(char *user_code);
 
 sessions get_session(char *filter_field, char *filter_value);
 
@@ -206,8 +212,8 @@ void login_menu() {
         rewind(users_file); // reset file pointer, since fscanf() will move the file pointer to the end of the file
         users user;
 
-        char user_id[50];
-        char password[50];
+        char user_id[MAX_USER_CODE_LENGTH];
+        char password[MAX_STRING_LENGTH];
 
         printf("Please enter your User Code (TP number or Tutor code) down below: \n");
         scanf("%s", user_id);
@@ -374,7 +380,7 @@ void add_user_menu(users session_user) {
 
 
     if (strcmp(user.role, "student") == 0) {
-        char student_code[50];
+        char student_code[MAX_USER_CODE_LENGTH];
         student_profiles student;
 
         strcpy(student.user_id,
@@ -393,7 +399,7 @@ void add_user_menu(users session_user) {
 
     if (strcmp(user.role, "tutor") == 0) {
         tutor_profiles tutor;
-        char tutor_code[50];
+        char tutor_code[MAX_USER_CODE_LENGTH];
 
         printf("Please enter the tutor's title down below: \n");
         scanf("%s", tutor.title);
@@ -424,7 +430,7 @@ void add_user_menu(users session_user) {
 void delete_user_menu(users session_user) {
     title_printer("User operation - Delete user");
 
-    char user_id[50];
+    char user_id[MAX_USER_CODE_LENGTH];
 
     printf("Please enter the user code of the user you want to delete: \n");
     scanf("%s", user_id);
@@ -561,7 +567,7 @@ void view_all_user_menu(users session_user) {
 void view_user_menu(users session_user) {
     title_printer("User operation - View user");
 
-    char user_id[50];
+    char user_id[MAX_USER_CODE_LENGTH];
 
     printf("Please enter the user code of the user you want to view: \n");
     scanf("%s", user_id);
@@ -700,7 +706,7 @@ void add_session_menu(users session_user) {
     printf("Please enter the session name: \n");
     scanf("%s", session.title);
 
-    printf("Please enter the session description: \n");
+    printf("Please enter the session day: \n");
     scanf("%s", session.day);
 
     printf("Please enter the session start time: \n");
@@ -719,7 +725,7 @@ void add_session_menu(users session_user) {
         session_operation_menu(session_user);
     }
 
-    char user_id[50];
+    char user_id[MAX_USER_CODE_LENGTH];
     strcpy(user_id, session.tutor_code);
 
     int num_sessions = 0;
@@ -747,7 +753,7 @@ void delete_session_menu(users session_user) {
     title_printer("Session operation - Delete session");
 
     printf("Please enter the session code: \n");
-    char session_code[50];
+    char session_code[MAX_SESSION_CODE_LENGTH];
     scanf("%s", session_code);
 
     sessions session = get_session("session_code", session_code);
@@ -762,7 +768,7 @@ void delete_session_menu(users session_user) {
     FILE *enrolled_sessions_file = fopen("enrolled_sessions.txt", "r");
     FILE *enrolled_sessions_temp_file = fopen("enrolled_sessions_temp.txt", "w");
 
-    char line[100];
+    char line[MAX_STRING_LENGTH];
     while (fgets(line, sizeof(line), sessions_file)) {
         if (strstr(line, session_code) == NULL) {
             fprintf(sessions_temp_file, "%s", line);
@@ -794,7 +800,7 @@ void view_session_menu(users session_user) {
     title_printer("Session operation - View session");
 
     printf("Please enter the session code: \n");
-    char session_code[50];
+    char session_code[MAX_SESSION_CODE_LENGTH];
     scanf("%s", session_code);
 
     sessions session = get_session("session_code", session_code);
@@ -844,7 +850,7 @@ void enroll_user_menu(users session_user) {
     FILE *enrolled_sessions_file = fopen("enrolled_sessions.txt", "a");
 
     printf("Please enter the session code: \n");
-    char session_code[50];
+    char session_code[MAX_SESSION_CODE_LENGTH];
     scanf("%s", session_code);
 
     sessions session = get_session("session_code", session_code);
@@ -855,7 +861,7 @@ void enroll_user_menu(users session_user) {
     }
 
     printf("Please enter the user code: \n");
-    char user_id[50];
+    char user_id[MAX_USER_CODE_LENGTH];
     scanf("%s", user_id);
 
     int response = user_code_parser(user_id);
@@ -902,7 +908,7 @@ void disenroll_user_menu(users session_user) {
     title_printer("Session operation - Disenroll user");
 
     printf("Please enter the session code: \n");
-    char session_code[50];
+    char session_code[MAX_SESSION_CODE_LENGTH];
     scanf("%s", session_code);
 
     sessions session = get_session("session_code", session_code);
@@ -913,7 +919,7 @@ void disenroll_user_menu(users session_user) {
     }
 
     printf("Please enter the user code: \n");
-    char user_id[50];
+    char user_id[MAX_USER_CODE_LENGTH];
     scanf("%s", user_id);
 
     int response = user_code_parser(user_id);
@@ -946,7 +952,7 @@ void disenroll_user_menu(users session_user) {
     FILE *enrolled_sessions_file = fopen("enrolled_sessions.txt", "r");
     FILE *enrolled_sessions_temp_file = fopen("enrolled_sessions_temp.txt", "w");
 
-    char line[100];
+    char line[MAX_STRING_LENGTH];
     while (fgets(line, sizeof(line), enrolled_sessions_file)) {
         if (strstr(line, session_code) == NULL) {
             fprintf(enrolled_sessions_temp_file, "%s", line);
@@ -998,7 +1004,7 @@ void tutor_dashboard_menu(users session_user) {
 void view_students_enrolled_in_sessions_menu(users session_user) {
     title_printer("View students enrolled in sessions");
 
-    char tutor_code[50] = "T";
+    char tutor_code[MAX_USER_CODE_LENGTH] = "T";
     strcat(tutor_code, session_user.user_id);
 
     sessions session = get_session("tutor_code", tutor_code);
@@ -1135,7 +1141,7 @@ void enroll_into_session_menu(users session_user) {
     }
 
     printf("Please enter the session code: \n");
-    char session_code[50];
+    char session_code[MAX_SESSION_CODE_LENGTH];
     scanf("%s", session_code);
 
     sessions session = get_session("session_code", session_code);
@@ -1286,12 +1292,12 @@ char **read(char *filename, int *num_lines) {
     // allocate memory for the lines array
     lines = (char **) malloc(sizeof(char *) * count);
     for (int i = 0; i < count; i++) {
-        lines[i] = (char *) malloc(sizeof(char) * 1024); // assuming max line length of 1024
+        lines[i] = (char *) malloc(sizeof(char) * MAX_STRING_LENGTH);
     }
 
     // read each line from the file and store it in the lines array
     int i = 0;
-    while (fgets(lines[i], 1024, fp) != NULL) {
+    while (fgets(lines[i], MAX_STRING_LENGTH, fp) != NULL) {
         i++;
     }
 
@@ -1322,24 +1328,24 @@ void dash_printer(int num) {
     printf("\n");
 }
 
-int user_code_parser(char *user_id) {
+int user_code_parser(char *user_code) {
     int valid_user_id = 0;
 
-    if ((user_id[0] == 'T' && user_id[1] == 'P') || (user_id[0] == 't' && user_id[1] == 'p') ||
-        (user_id[0] == 't' && user_id[1] == 'P') || (user_id[0] == 'T' && user_id[1] == 'p')) {
+    if ((user_code[0] == 'T' && user_code[1] == 'P') || (user_code[0] == 't' && user_code[1] == 'p') ||
+        (user_code[0] == 't' && user_code[1] == 'P') || (user_code[0] == 'T' && user_code[1] == 'p')) {
         valid_user_id = 1;
-        for (int i = 0; i < 50; i++) {
-            user_id[i] = user_id[i + 2];
+        for (int i = 0; i < MAX_USER_CODE_LENGTH; i++) {
+            user_code[i] = user_code[i + 2];
         }
-    } else if ((user_id[0] == 'T') || (user_id[0] == 't')) {
+    } else if ((user_code[0] == 'T') || (user_code[0] == 't')) {
         valid_user_id = 1;
-        for (int i = 0; i < 50; i++) {
-            user_id[i] = user_id[i + 1];
+        for (int i = 0; i < MAX_USER_CODE_LENGTH; i++) {
+            user_code[i] = user_code[i + 1];
         }
-    } else if ((user_id[0] == 'A') || (user_id[0] == 'a')) {
+    } else if ((user_code[0] == 'A') || (user_code[0] == 'a')) {
         valid_user_id = 1;
-        for (int i = 0; i < 50; i++) {
-            user_id[i] = user_id[i + 1];
+        for (int i = 0; i < MAX_USER_CODE_LENGTH; i++) {
+            user_code[i] = user_code[i + 1];
         }
     }
 
@@ -1349,7 +1355,7 @@ int user_code_parser(char *user_id) {
 sessions get_session(char *filter_field, char *filter_value) {
     sessions s;
     FILE *fp;
-    char buffer[255];
+    char buffer[MAX_STRING_LENGTH];
 
     fp = fopen("sessions.txt", "r");
     if (fp == NULL) {
@@ -1407,7 +1413,7 @@ sessions get_session(char *filter_field, char *filter_value) {
 enrolled_sessions *get_enrolled_sessions(char *filter_field, char *filter_value, int *num_sessions) {
     enrolled_sessions *sessions = NULL;
     FILE *fp;
-    char buffer[255];
+    char buffer[MAX_STRING_LENGTH];
     int count = 0;
 
     fp = fopen("enrolled_sessions.txt", "r");
@@ -1491,7 +1497,7 @@ enrolled_sessions *get_enrolled_sessions(char *filter_field, char *filter_value,
 users get_user(char *user_id) {
     users u;
     FILE *fp;
-    char buffer[255];
+    char buffer[MAX_STRING_LENGTH];
 
     fp = fopen("users.txt", "r");
     if (fp == NULL) {
@@ -1535,7 +1541,7 @@ users get_user(char *user_id) {
 student_profiles get_student_profile(char *user_id) {
     student_profiles sp;
     FILE *fp;
-    char buffer[255];
+    char buffer[MAX_STRING_LENGTH];
 
     fp = fopen("student_profiles.txt", "r");
     if (fp == NULL) {
@@ -1573,7 +1579,7 @@ student_profiles get_student_profile(char *user_id) {
 tutor_profiles get_tutor_profile(char *user_id) {
     tutor_profiles tp;
     FILE *fp;
-    char buffer[255];
+    char buffer[MAX_STRING_LENGTH];
 
     fp = fopen("tutor_profiles.txt", "r");
     if (fp == NULL) {
