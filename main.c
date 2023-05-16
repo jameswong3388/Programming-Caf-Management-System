@@ -133,8 +133,10 @@ void home_menu() {
     while (1) {
         int option;
         printf("Please select an option below: \n");
+        // If the scanf returns 1, indicating that the input successfully converts to an integer.
         if (scanf("%d", &option) != 1) {
             printf("[SERVER WARNING] Invalid input. Please enter a numeric integer.\n");
+            // Clear the input buffer, including the newline character, so that the next input will not be skipped.
             while (getchar() != '\n');
             continue;
         }
@@ -1291,6 +1293,11 @@ char **read(char *filename, int *num_lines) {
 
     // allocate memory for the lines array
     lines = (char **) malloc(sizeof(char *) * count);
+    if (lines == NULL) {
+        printf("[SERVER ERROR] Failed to allocate memory for lines array\n");
+        return NULL;
+    }
+
     for (int i = 0; i < count; i++) {
         lines[i] = (char *) malloc(sizeof(char) * MAX_STRING_LENGTH);
     }
@@ -1369,6 +1376,7 @@ sessions get_session(char *filter_field, char *filter_value) {
 
         // split the buffer into fields using semicolon as delimiter
         char *session_code_field = strtok(buffer, ";");
+        // use strtok(NULL, ";") to continue tokenising where the previous call left off
         char *title_field = strtok(NULL, ";");
         char *day_field = strtok(NULL, ";");
         char *start_time_field = strtok(NULL, ";");
@@ -1444,12 +1452,12 @@ enrolled_sessions *get_enrolled_sessions(char *filter_field, char *filter_value,
     // allocate memory for the sessions array
     sessions = (enrolled_sessions *) malloc(count * sizeof(enrolled_sessions));
     if (sessions == NULL) {
-        printf("[SERVER ERROR] failed to allocate memory\n");
+        printf("[SERVER ERROR] failed to allocate memory for sessions array\n");
         return sessions;
     }
 
     // reset the file pointer to the beginning of the file
-    fseek(fp, 0, SEEK_SET);
+    rewind(fp);
 
     // read the enrolled session information into the sessions array
     int i = 0;
