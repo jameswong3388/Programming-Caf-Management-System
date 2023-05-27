@@ -1,0 +1,79 @@
+Record Structures
+sessions
+    session_code S
+    title
+    day
+    start_time
+    location
+    tutor_code
+
+enrolled_sessions
+    session_code
+    user_id
+    name
+    role
+
+users
+    user_id
+    name
+    password
+    email
+    role
+
+tutor_profiles
+    user_id
+    tutor_code
+    title
+student_profiles
+    user_id
+    student_code
+
+Module declarations
+/* void main() */
+main
+    setup
+    home_menu
+END
+
+/* void home_menu() */
+home_menu
+    SET flag = 1
+    DOWHILE flag = 1
+        PRINT "Welcome to APU Programming Cafe Management System!"
+        PRINT "1. Login
+        PRINT "2. View available sessions
+        PRINT "0. Exit
+
+        SET option
+        PRINT "Please select an option below: "
+
+        IF scanf("%d", &option) NOT 1 THEN
+            PRINT "[SERVER WARNING] Invalid input. Please enter a numeric integer."
+            DOWHILE getchar NOT '\n'
+            ENDO
+            CONTINUE
+        ENIF
+
+        SET response = 0
+
+        CASE OF option
+            1:
+                SET response = login_menu
+                IF response = 0 THEN
+                    SET flag = 0
+                ENDIF
+                BREAK
+            2:
+                available_sessions_menu
+                BREAK
+            3:
+                SET flag = 0
+                PRINT "[SERVER INFO] Thank you for using APU Programming Cafe Management System!"
+                BREAK
+            DEFAULT:
+                PRINT "[SERVER WARNING] Invalid option. Please try again.\n"
+        ENDCASE
+    ENDO
+END
+
+/* void available_sessions_menu() */
