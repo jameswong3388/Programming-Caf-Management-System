@@ -85,9 +85,9 @@ available_sessions_menu
 
     SET session FROM STRUCTURE sessions
 
-    IF lines NOT 0 THEN
+    IF NOT lines NULL THEN
         dash_printer(98)
-        PRINT "Session code | Title | Day | Start time | Location | Tutor code"
+        PRINT "No. | Session code | Title | Day | Start time | Location | Tutor code"
         dash_printer(98)
         DO i = 0 TO num_lines
             SET session.session_code = SPLIT ";" FROM lines[i]
@@ -134,7 +134,8 @@ login_menu
         SET response = user_code_parser(user_id)
 
         IF response = 0 THEN
-            DOWHILE fscanf(users_file) NOT EOF
+            DOWHILE fscanf(users_file, "%[^;];%[^;];%[^;];%[^;];%[^;];\n", user.user_id, user.name, user.password,
+                                          user.email, user.role) NOT EOF
                 IF user.user_id = user_id AND user.password = password THEN
                     SET authenticated = 1
                     BREAK
@@ -307,7 +308,7 @@ add_user_menu(users session_user)
         GET INPUT tutor.title
 
         tutor.user_id = user.user_id
-        tutor_code = "Tu" + user.user_id
+        tutor_code = "TU" + user.user_id
         tutor.tutor_code = tutor_code
 
         SET tutor_profiles_file = FILE OPEN "tutor_profiles.txt" WITH "a"
@@ -319,4 +320,126 @@ add_user_menu(users session_user)
     PRINT user INTO users_file
     FILE CLOSE users_file
     PRINT "[SERVER INFO] User added successfully!"
+END
+
+/* void delete_user_menu(users session_user) */
+delete_user_menu(users session_user)
+    title_printer("User operation - Delete user")
+    SET user_id
+
+    PRINT "Please enter the user code of the user you want to delete: "
+    GET INPUT user_id
+
+    SET response = user_code_parser(user_id)
+
+    IF RESPONSE = 0 THEN
+        PRINT "[SERVER WARNING] Invalid user code."
+        RETURN
+    ENDIF
+
+    SET user FROM STRUCTURE users = get_user(user_id)
+
+    IF user.user_id = "" THEN
+        PRINT "[SERVER ERROR] User does not exist."
+        RETURN
+    ELSE
+        SET users_temp_file = FILE OPEN "users_temp.txt" WITH "w"
+        SET users_file = FILE OPEN "users.txt" WITH "r"
+
+        SET is_student = 0
+        SET is_tutor = 0
+
+        DOWHILE  fscanf(users_file, "%[^;];%[^;];%[^;];%[^;];%[^;];\n", user.user_id, user.name, user.password,
+                                           user.email, user.role) NOT EOF
+            IF NOT user.user_id = user_id THEN
+                STORE user INTO temp_users_file
+            ELSE
+                IF user.role = "student" THEN
+                    SET is_student = 1
+                ELSE IF user.role = "tutor" THEN
+                    SET is_tutor = 1
+                ENDIF
+            ENDIF
+        ENDO
+
+        FILE CLOSE users_file
+        FILE CLOSE users_temp_file
+
+        FILE REMOVE "users.txt"
+        FILE RENAME "users_temp.txt" TO "users.txt"
+
+        IF is_student = 1 THEN
+            SET student_profiles_file = FILE OPEN "student_profiles.txt" WITH "r"
+            SET student_profiles_temp_file = FILE OPEN "student_profiles_temp.txt" WITH "w"
+
+            SET student FROM STRUCTURE student_profiles
+
+            DOWHILE NOT fscanf(student_profiles_file, "%[^;];%[^;];\n", student.user_id, student.student_code) = EOF
+                IF student.user_id NOT user_id THEN
+                    STORE student INTO student_profiles_temp_file
+                ENDIF
+            ENDDO
+
+            FILE CLOSE student_profiles_file
+            FILE CLOSE student_profiles_temp_file
+
+            FILE REMOVE "student_profiles.txt"
+            FILE RENAME "student_profiles_temp.txt" TO "student_profiles.txt"
+
+            PRINT "[SERVER INFO] User deleted successfully!"
+        ENDIF
+
+        IF is_tutor = 1 THEN
+            SET tutor_profiles_file = FILE OPEN "tutor_profiles.txt" WITH "r"
+            SET tutor_profiles_temp_file = FILE OPEN "tutor_profiles_temp.txt" WITH "w"
+
+            SET tutor FROM STRUCTURE
+
+            DOWHILE NOT fscanf(tutor_profiles_file, "%[^;];%[^;];%[^;];\n", tutor.user_id, tutor.tutor_code, tutor.title) = EOF
+                IF tutor.user_id NOT user_id THEN
+                    STORE tutor INTO tutor_profiles_temp_file
+                ENDIF
+            ENDDO
+
+            FILE CLOSE tutor_profiles_file
+            FILE CLOSE tutor_profiles_temp_file
+
+            FILE REMOVE "tutor_profiles.txt"
+            FILE RENAME "tutor_profiles_temp.txt" TO "tutor_profiles.txt"
+
+            PRINT "[SERVER INFO] User deleted successfully!"
+        ENDIF
+    ENDIF
+END
+
+/* void view_all_user_menu(users session_user) */
+view_all_user_menu(users session_user)
+    title_printer("User operation - View user")
+
+    SET number_lines
+    SET lines = read("sessions.txt")
+
+    SET user FROM STRUCTURE users
+
+    IF NOT lines = NULL THEN
+        dash_printer(91)
+        PRINT "No. | User id | Name | Email | Password | Role |"
+        dash_printer(91)
+        DO i = 0 TO num_lines
+            SET session.user_id = SPLIT ";" FROM lines[i]
+            SET session.name = SPLIT ";" FROM lines[i]
+            SET session.password = SPLIT ";" FROM lines[i]
+            SET session.email = SPLIT ";" FROM lines[i]
+            SET session.role = SPLIT ";" FROM lines[i]
+
+            PRINT "{user.user_id} {user.name} {user.password} {user.email} {user.role}"
+        ENDDO
+        dash_printer
+
+        DO i = 0 TO num_lines
+            FREE lines[i]
+        ENDDO
+
+        FREE lines
+    ENDIF
 END
