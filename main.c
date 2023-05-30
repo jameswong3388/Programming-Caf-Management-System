@@ -403,7 +403,7 @@ void add_user_menu(users session_user) {
 
         strcpy(tutor.user_id, user.user_id);
 
-        strcpy(tutor_code, "T");
+        strcpy(tutor_code, "TU");
         strcat(tutor_code, user.user_id);
         strcpy(tutor.tutor_code, tutor_code);
 

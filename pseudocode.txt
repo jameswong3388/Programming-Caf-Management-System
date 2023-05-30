@@ -47,7 +47,7 @@ home_menu
         SET option
         PRINT "Please select an option below: "
 
-        IF scanf("%d", &option) NOT 1 THEN
+        IF GET INPUT NOT int THEN
             PRINT "[SERVER WARNING] Invalid input. Please enter a numeric integer."
             DOWHILE getchar NOT '\n'
             ENDO
@@ -71,9 +71,252 @@ home_menu
                 PRINT "[SERVER INFO] Thank you for using APU Programming Cafe Management System!"
                 BREAK
             DEFAULT:
-                PRINT "[SERVER WARNING] Invalid option. Please try again.\n"
+                PRINT "[SERVER WARNING] Invalid option. Please try again."
         ENDCASE
     ENDO
 END
 
 /* void available_sessions_menu() */
+available_sessions_menu
+    title_printer("Available sessions")
+    SET num_lines
+
+    SET lines = read("sessions.txt")
+
+    SET session FROM STRUCTURE sessions
+
+    IF lines NOT 0 THEN
+        dash_printer(98)
+        PRINT "Session code | Title | Day | Start time | Location | Tutor code"
+        dash_printer(98)
+        DO i = 0 TO num_lines
+            SET session.session_code = SPLIT ";" FROM lines[i]
+            SET session.title = SPLIT ";" FROM lines[i]
+            SET session.day = SPLIT ";" FROM lines[i]
+            SET session.start_time = SPLIT ";" FROM lines[i]
+            SET session.location = SPLIT ";" FROM lines[i]
+            SET session.tutor_code = SPLIT ";" FROM lines[i]
+
+            PRINT "{session.session_code} {session.title} {session.day} {session.start_time} {session.location} {session.tutor_code}"
+        ENDDO
+        dash_printer(98)
+    ENDIF
+
+    DO i = 0 TO num_lines
+        FREE lines[i]
+    ENDDO
+
+    FREE lines
+END
+
+/* int login_menu() */
+login_menu
+    title_printer("Login page")
+
+    SET users_file = FILE OPEN "users.txt" WITH "r"
+
+    SET authenticated = 0
+    SET login_attempts = 0
+
+    SET max_login_attempts = 3
+
+    DOWHILE login_attempts < max_login_attempts
+        SET user FROM STRUCTURE users
+
+        SET user_id
+        SET password
+
+        PRINT "Please enter your User Code (TP number or Tutor code) down below: "
+        GET INPUT user_id
+        "Please enter your password down below: "
+        GET INPUT password
+
+        SET response = user_code_parser(user_id)
+
+        IF response = 0 THEN
+            DOWHILE fscanf(users_file) NOT EOF
+                IF user.user_id = user_id AND user.password = password THEN
+                    SET authenticated = 1
+                    BREAK
+                ENDIF
+            ENDDO
+        ENDIF
+
+        IF authenticated = 1 THEN
+            FILE CLOSE users_file
+            PRINT "[SERVER INFO] Login successful {user.name} ({user.role})!"
+            IF user.role = "admin" THEN
+                admin_dashboard_menu(user)
+            ELSE IF user.role = "tutor" THEN
+                tutor_dashboard_menu(user)
+            ELSE IF user.role = "student" THEN
+                student_dashboard_menu(user)
+            ENDIF
+            BREAK
+        ELSE
+            login_attempts = login_attempts + 1
+            PRINT [SERVER WARNING] Login id or password is incorrect, {login_attempts} attempts left. Please try again."
+        ENDIF
+    ENDDO
+
+    FILE CLOSE users_file
+    PRINT "[SERVER ERROR] Max login attempts reached. Exiting program."
+    RETURN authenticated
+END
+
+/* void admin_dashboard_menu(user) */
+admin_dashboard_menu(user)
+    SET flag = 1
+
+    DOWHILE flag = 1
+        title_printer("Dashboard")
+        printf "Welcome {session_user.name} ({session_user.role}) !"
+        printf "1. User operation"
+        printf "2. Session operation."
+        printf "0. Logout"
+
+        SET option
+        PRINT "Please select an option below: "
+        IF GET INPUT NOT int THEN
+            PRINT "[SERVER WARNING] Invalid input. Please enter a numeric integer."
+            DOWHILE getchar NOT '\n'
+            ENDO
+            CONTINUE
+        ENDIF
+
+        CASE OF option
+            1:
+                user_operation_menu(session_user)
+                BREAK
+            2:
+                session_operation_menu(session_user)
+                BREAK
+            3:
+                SET flag = 0
+                BREAK
+            DEFAULT:
+                PRINT "[SERVER WARNING] Invalid option. Please try again."
+                BREAK
+        ENDCASE
+    ENDDO
+END
+
+/* void user_operation_menu(user) */
+user_operation_menu(user)
+    SET flag = 1
+    DOWHILE flag
+        title_printer("User operation")
+        PRINT "1. Add user."
+        PRINT "2. Delete user."
+        PRINT "3. View all user."
+        PRINT "4 .View user profile."
+        PRINT "0. Back to dashboard."
+        SET OPTION
+        PRINT "Please select an option below: "
+
+        IF GET INPUT NOT int THEN
+            PRINT "[SERVER WARNING] Invalid input. Please enter a numeric integer."
+            DOWHILE getchar NOT '\n'
+            ENDO
+            CONTINUE
+        ENDIF
+
+        CASE OF option
+            1:
+                add_user_menu(session_user)
+                BREAK
+            2:
+                delete_user_menu(session_user)
+                BREAK
+            3:
+                view_all_user_menu(session_user)
+                BREAK
+            4:
+                view_user_menu(session_user)
+                BREAK
+            0:
+                SET flag = 0
+                BREAK
+            DEFAULT:
+                PRINT "[SERVER WARNING] Invalid option. Please try again."
+                BREAK
+        ENDCASE
+    ENDDO
+END
+
+/* void add_user_menu(users session_user) */
+add_user_menu(users session_user)
+    SET user FROM STRUCTURE users
+    title_printer("User operation - Add user")
+
+    DOWHILE 1
+        PRINT "Please enter the user's role (student or tutor) down below: "
+        GET INPUT user.role
+        IF user.role NOT "student" OR user.role NOT "tutor" THEN
+            PRINT "[SERVER WARNING] Invalid role. Please try again."
+            BREAK
+        ELSE
+            PRINT "[SERVER ERROR] Invalid role. Please try again."
+        ENDIF
+    ENDO
+
+    PRINT "Please enter the user's name down below: "
+    GET INPUT user.name
+
+    DOWHILE 1
+        PRINT "Please enter the user's user id down below: "
+        GET INPUT user.user_id
+        IF user.user_id LENGTH = 6 THEN
+            BREAK
+        ELSE
+            PRINT "[SERVER WARNING] User id must be exactly 6 characters long. Please try again."
+        ENDIF
+    ENDO
+
+    DOWHILE 1
+        PRINT "Please enter the user's password down below: "
+        GET INPUT user.password
+        IF user.user_id LENGTH >= 8 THEN
+            BREAK
+        ELSE
+            PRINT "[SERVER WARNING] Password must be at least 8 characters long. Please try again."
+        ENDIF
+    ENDO
+
+    PRINT "Please enter the user's email down below: "
+    GET INPUT user.email
+
+    IF user.role = "student" THEN
+        SET student_code
+        SET student FROM STRUCTURE student_profiles
+
+        student.user_id = user.user_id
+        student_code = "TP" + user.user_id
+        student.student_code = student_code
+
+        SET student_profiles_file = FILE OPEN "student_profiles.txt" WITH "a"
+        PRINT student INTO student_profiles_file
+        FILE CLOSE student_profiles_file
+    ENDIF
+
+    IF user.role = "tutor" THEN
+        SET tutor FROM STRUCTURE tutor_profiles
+        SET tutor_code
+
+        PRINT "Please enter the tutor's title down below: "
+        GET INPUT tutor.title
+
+        tutor.user_id = user.user_id
+        tutor_code = "Tu" + user.user_id
+        tutor.tutor_code = tutor_code
+
+        SET tutor_profiles_file = FILE OPEN "tutor_profiles.txt" WITH "a"
+        PRINT tutor INTO tutor_profiles_file
+        FILE CLOSE tutor_profiles_file
+    ENDIF
+
+    SET users_file = FILE OPEN "users.txt" WITH "a"
+    PRINT user INTO users_file
+    FILE CLOSE users_file
+    PRINT "[SERVER INFO] User added successfully!"
+END
