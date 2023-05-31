@@ -256,8 +256,11 @@ int login_menu() {
         }
     }
 
-    fclose(users_file);
-    printf("[SERVER ERROR] Max login attempts reached. Exiting program.\n");
+    if (login_attempts == max_login_attempts) {
+        fclose(users_file);
+        printf("[SERVER ERROR] Max login attempts reached. Exiting program.\n");
+    }
+
     return authenticated;
 }
 
@@ -303,7 +306,7 @@ void user_operation_menu(users session_user) {
         printf("1. Add user.\n");
         printf("2. Delete user.\n");
         printf("3. View all user.\n");
-        printf("4 .View user profile.\n");
+        printf("4. View user profile.\n");
         printf("0. Back to dashboard.\n");
         int option;
         printf("Please select an option below: \n");
@@ -874,6 +877,8 @@ void enroll_user_menu(users session_user) {
             free(user_sessions);
             return;
         }
+
+        free(user_sessions);
     }
 
     int num_sessions = 0;
@@ -883,6 +888,11 @@ void enroll_user_menu(users session_user) {
     for (int i = 0; i < num_sessions; i++) {
         if (strcmp(sessions[i].user_id, user_id) == 0) {
             printf("[SERVER ERROR] User is already enrolled in the session.\n");
+            return;
+        }
+
+        if (strcmp(sessions[i].role, "tutor") == 0 && strcmp(user.role, "tutor") == 0) {
+            printf("[SERVER ERROR] A session cannot have more than one tutor.\n");
             return;
         }
     }
@@ -1014,7 +1024,7 @@ void tutor_dashboard_menu(users session_user) {
 void view_students_enrolled_in_sessions_menu(users session_user) {
     title_printer("View students enrolled in sessions");
 
-    char tutor_code[MAX_USER_CODE_LENGTH] = "T";
+    char tutor_code[MAX_USER_CODE_LENGTH] = "TU";
     strcat(tutor_code, session_user.user_id);
 
     sessions session = get_session("tutor_code", tutor_code);
@@ -1161,7 +1171,7 @@ void enroll_into_session_menu(users session_user) {
 
     int num_sessions = 0;
 
-    enrolled_sessions *enrolled_session = get_enrolled_sessions("session_code", session_user.user_id, &num_sessions);
+    enrolled_sessions *enrolled_session = get_enrolled_sessions("user_id", session_user.user_id, &num_sessions);
 
     for (int i = 0; i < num_sessions; i++) {
         if (strcmp(enrolled_session[i].session_code, session_code) == 0) {
@@ -1192,11 +1202,11 @@ void setup() {
     FILE *student_profiles_file = fopen("student_profiles.txt", "w");
 
     char default_sessions[5][6][50] = {
-            {"PYP101", "Python Programming",  "Saturday", "9.00am", "C-01-01", "T265663"},
-            {"JAV102", "Java Programming",    "Sunday",   "9.00am", "C-01-02", "T009650"},
-            {"CSC103", "C Programming",       "Saturday", "2.00pm", "C-01-03", "T544654"},
-            {"WEB104", "Web Development",     "Sunday",   "2.00pm", "C-01-04", "T577001"},
-            {"CSP105", "C Sharp Programming", "Monday",   "7.00pm", "C-01-05", "T683357"}
+            {"PYP101", "Python Programming",  "Saturday", "9.00am", "C-01-01", "TU265663"},
+            {"JAV102", "Java Programming",    "Sunday",   "9.00am", "C-01-02", "TU009650"},
+            {"CSC103", "C Programming",       "Saturday", "2.00pm", "C-01-03", "TU544654"},
+            {"WEB104", "Web Development",     "Sunday",   "2.00pm", "C-01-04", "TU577001"},
+            {"CSP105", "C Sharp Programming", "Monday",   "7.00pm", "C-01-05", "TU683357"}
     };
 
     char default_enrolled_sessions[6][4][50] = {
@@ -1208,23 +1218,25 @@ void setup() {
             {"CSP105", "072187", "Jammie", "student"}
     };
 
-    char default_users[8][5][50] = {
-            {"123456", "John",   "123456", "admin@apu.edu.my", "admin"},
-            {"265663", "Mary",   "123456", "marry@apu.edu.my", "tutor"},
-            {"009650", "Peter",  "123456", "peter@apu.edu.my", "tutor"},
-            {"544654", "James",  "123456", "james@apu.edu.my", "tutor"},
-            {"577001", "Johnny", "123456", "john@apu.edu.my",  "tutor"},
-            {"683357", "David",  "123456", "david@apu.edu.my", "tutor"},
-            {"072187", "Jammie", "123456", "jamie@apu.edu.my", "student"},
-            {"073188", "Jin", "123456", "jin@apu.edu.my", "student"}
+    char default_users[9][5][50] = {
+            {"123123", "John",   "123123", "admin@apu.edu.my", "admin"},
+            {"265663", "Mary",   "123123", "marry@apu.edu.my", "tutor"},
+            {"009650", "Peter",  "123123", "peter@apu.edu.my", "tutor"},
+            {"544654", "James",  "123123", "james@apu.edu.my", "tutor"},
+            {"577001", "Johnny", "123123", "john@apu.edu.my",  "tutor"},
+            {"683357", "David",  "123123", "david@apu.edu.my", "tutor"},
+            {"293333", "howard", "123123", "howard@apu.edu.my", "tutor"},
+            {"072187", "Jammie", "123123", "jamie@apu.edu.my", "student"},
+            {"073188", "Jin", "123123", "jin@apu.edu.my", "student"}
     };
 
-    char default_tutor_profiles[5][3][50] = {
-            {"265663", "T265663", "Python Programming Tutor"},
-            {"009650", "T009650", "Java Programming Tutor"},
-            {"544654", "T544654", "C Programming Tutor"},
-            {"577001", "T577001", "Web Development Tutor"},
-            {"683357", "T683357", "C Sharp Programming Tutor"}
+    char default_tutor_profiles[6][3][50] = {
+            {"265663", "TU265663", "Python Programming Tutor"},
+            {"009650", "TU009650", "Java Programming Tutor"},
+            {"544654", "TU544654", "C Programming Tutor"},
+            {"577001", "TU577001", "Web Development Tutor"},
+            {"683357", "TU683357", "C Sharp Programming Tutor"},
+            {"073188", "TU073188", "Null"}
     };
 
     char default_student_profiles[2][2][50] = {
@@ -1250,7 +1262,7 @@ void setup() {
     }
 
     // users.txt
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 9; i++) {
         for (int j = 0; j < 5; j++) {
             fprintf(users_file, "%s;", default_users[i][j]);
         }
@@ -1258,7 +1270,7 @@ void setup() {
     }
 
     // tutor_profiles.txt
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 6; i++) {
         for (int j = 0; j < 3; j++) {
             fprintf(tutor_profiles_file, "%s;", default_tutor_profiles[i][j]);
         }
