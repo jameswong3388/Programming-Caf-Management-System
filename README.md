@@ -17,7 +17,7 @@ Make sure you have [`git`](https://git-scm.com/downloads) installed to clone the
 the [`zip`](https://github.com/jameswong3388/APU-Programming-Caf-Management-System/archive/refs/heads/master.zip) file.
 
 ## Credits
-User Acceptance Test (UAT) - Yap Jia Xin, Yeong Man Wei, Jayden Low, Terrace
+User Acceptance Test (UAT) - Yap Jia Xin, Yeong Man Wei, Jayden Low, Terence Tan
 
 ## Bugs and Issues
 
