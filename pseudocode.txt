@@ -81,7 +81,7 @@ available_sessions_menu
     title_printer("Available sessions")
     SET num_lines
 
-    SET lines = read("sessions.txt")
+    SET lines, num_lines = read("sessions.txt")
 
     SET session FROM STRUCTURE sessions
 
@@ -131,7 +131,7 @@ login_menu
         "Please enter your password down below: "
         GET INPUT password
 
-        SET response = user_code_parser(user_id)
+        SET response, user_id = user_code_parser(user_id)
 
         IF response = 0 THEN
             DOWHILE fscanf(users_file, "%[^;];%[^;];%[^;];%[^;];%[^;];\n", user.user_id, user.name, user.password,
@@ -160,8 +160,10 @@ login_menu
         ENDIF
     ENDDO
 
-    FILE CLOSE users_file
-    PRINT "[SERVER ERROR] Max login attempts reached. Exiting program."
+    IF login_attempts = max_login_attempts THEN
+        FILE CLOSE users_file
+        PRINT "[SERVER ERROR] Max login attempts reached. Exiting program."
+    ENIF
     RETURN authenticated
 END
 
@@ -172,7 +174,7 @@ admin_dashboard_menu(user)
     DOWHILE flag = 1
         title_printer("Dashboard")
         printf "Welcome {session_user.name} ({session_user.role}) !"
-        printf "1. User operation"
+        printf "1. User operation."
         printf "2. Session operation."
         printf "0. Logout"
 
@@ -210,7 +212,7 @@ user_operation_menu(user)
         PRINT "1. Add user."
         PRINT "2. Delete user."
         PRINT "3. View all user."
-        PRINT "4 .View user profile."
+        PRINT "4. View user profile."
         PRINT "0. Back to dashboard."
         SET OPTION
         PRINT "Please select an option below: "
@@ -330,7 +332,7 @@ delete_user_menu(users session_user)
     PRINT "Please enter the user code of the user you want to delete: "
     GET INPUT user_id
 
-    SET response = user_code_parser(user_id)
+    SET response, user_id = user_code_parser(user_id)
 
     IF RESPONSE = 0 THEN
         PRINT "[SERVER WARNING] Invalid user code."
@@ -352,7 +354,7 @@ delete_user_menu(users session_user)
         DOWHILE  fscanf(users_file, "%[^;];%[^;];%[^;];%[^;];%[^;];\n", user.user_id, user.name, user.password,
                                            user.email, user.role) NOT EOF
             IF NOT user.user_id = user_id THEN
-                STORE user INTO temp_users_file
+                STORE user.user_id ";" user.name ";"user.password ";"user.email ";" user.role INTO temp_users_file
             ELSE
                 IF user.role = "student" THEN
                     SET is_student = 1
@@ -376,7 +378,7 @@ delete_user_menu(users session_user)
 
             DOWHILE NOT fscanf(student_profiles_file, "%[^;];%[^;];\n", student.user_id, student.student_code) = EOF
                 IF student.user_id NOT user_id THEN
-                    STORE student INTO student_profiles_temp_file
+                    STORE student.user_id ";" student.student_code INTO student_profiles_temp_file
                 ENDIF
             ENDDO
 
@@ -397,7 +399,7 @@ delete_user_menu(users session_user)
 
             DOWHILE NOT fscanf(tutor_profiles_file, "%[^;];%[^;];%[^;];\n", tutor.user_id, tutor.tutor_code, tutor.title) = EOF
                 IF tutor.user_id NOT user_id THEN
-                    STORE tutor INTO tutor_profiles_temp_file
+                    STORE tutor.user_id ";" tutor.tutor_code ";" tutor.title INTO tutor_profiles_temp_file
                 ENDIF
             ENDDO
 
@@ -417,7 +419,7 @@ view_all_user_menu(users session_user)
     title_printer("User operation - View user")
 
     SET number_lines
-    SET lines = read("sessions.txt")
+    SET lines, num_lines = read("sessions.txt")
 
     SET user FROM STRUCTURE users
 
@@ -442,4 +444,708 @@ view_all_user_menu(users session_user)
 
         FREE lines
     ENDIF
+END
+
+/* void view_user_menu(users session_user) */
+view_user_menu(users session_user)
+    title_printer("User operation - View user")
+
+    SET user_id
+
+    PRINT "Please enter the user code of the user you want to view: "
+    GET INPUT user_id
+
+    SET response, user_id = user_code_parser(user_id)
+
+    IF response = 0 THEN
+        PRINT "[SERVER WARNING] Invalid user code."
+        RETURN
+    ENDIF
+
+    SET user FROM STRUCTURE users = get_user(user_id)
+
+    IF user.user_id = "" THEN
+        PRINT "[SERVER ERROR] User does not exist."
+        RETURN
+    ELSE
+        PRINT "## User Details ##"
+        dash_printer(85)
+        PRINT "User ID | "Name | Password | Email | Role"
+        dash_printer(85);
+        PRINT "{user.user_id} {user.name} {user.password} {user.email} {user.role}"
+        dash_printer(85)
+
+        PRINT "## User Profile ##"
+        IF user.role = "student" THEN
+            dash_printer(16);
+            SET student FROM STRUCTURE student_profiles = get_student(user_id)
+            PRINT "Student Code"
+            dash_printer(16);
+            PRINT "{student.student_code}"
+            dash_printer(16)
+        ELSE IF user.role = "tutor" THEN
+            SET tutor FROM STRUCTURE tutor_profiles = get_tutor(user_id)
+            dash_printer(50);
+            PRINT "Tutor Code", "Title"
+            dash_printer(50);
+            PRINT "{tutor.tutor_code} {tutor.title}"
+            dash_printer(50);
+            PRINT "{tutor.tutor_code}"
+        ENDIF
+        PRINT "\n"
+
+        SET num_sessions = 0
+
+        SET sessions FROM STRUCTURE enrolled_sessions, num_sessions = get_enrolled_sessions("user_id", user_id)
+
+        PRINT "## Enrolled Sessions ##"
+        dash_printer(55)
+        PRINT "No. | Session | User ID | Name | Role"
+        dash_printer(55)
+
+        IF num_sessions > 0 THEN
+            DO i = 0 TO num_sessions
+                PRINT "{i + 1} {session.session_id} {user.user_id} {user.name} {user.role}"
+            ENDDO
+        ELSE
+            PRINT "No enrolled sessions."
+        ENDIF
+
+        dash_printer(55)
+
+        free(sessions)
+    ENDIF
+END
+
+/* void session_operation_menu(users session_user) */
+session_operation_menu(users session_user)
+    SET flag = 1
+    DOWHILE flag
+        title_printer("Session operation")
+        PRINT "1. Add session.
+        PRINT "2. Delete session.
+        PRINT "3. View session.
+        PRINT "4. Enroll a user.
+        PRINT "5. Disenroll a user.
+        SET OPTION
+        PRINT "Please select an option below: "
+
+        IF GET INPUT NOT int THEN
+            PRINT "[SERVER WARNING] Invalid input. Please enter a numeric integer."
+            DOWHILE getchar NOT '\n'
+            ENDO
+            CONTINUE
+        ENDIF
+
+        CASE OF option
+            1:
+                add_session_menu(session_user)
+                BREAK
+            2:
+                delete_session_menu(session_user)
+                BREAK
+            3:
+                view_session_menu(session_user)
+                BREAK
+            4:
+                enroll_user_menu(session_user)
+                BREAK
+            5:
+                disenroll_user_menu(session_user)
+                BREAK
+
+            0:
+                SET flag = 0
+                BREAK
+            DEFAULT:
+                PRINT "[SERVER WARNING] Invalid option. Please try again."
+                BREAK
+        ENDCASE
+    ENDDO
+END
+
+/* void add_session_menu(users session_user) */
+add_session_menu(users session_user)
+    title_printer("Session operation - Add session")
+
+    SET sessions_file = FILE OPEN "sessions.txt" WITH "a"
+    SET enrolled_sessions_file = FILE OPEN "enrolled_sessions.txt" WITH "a"
+
+    SET session FROM STRUCTURE sessions
+
+    DOWHILE 1
+        PRINT "Please enter the session code: "
+        GET INPUT session.session_code
+
+        IF LEN session.session_code = 6 THEN
+            BREAK
+        ELSE
+            PRINT "[SERVER WARNING] Session code must be 6 characters long."
+        ENDIF
+    ENDDO
+
+    PRINT "Please enter the session name: "
+    GET INPUT session.session_name
+
+    PRINT "Please enter the session day: "
+    GET INPUT session.session_day
+
+    PRINT "Please enter the session start time: "
+    GET INPUT session.session_start_time
+
+    PRINT "Please enter the session location: "
+    GET INPUT session.session_location
+
+    PRINT "Enrolled a tutor into the session: "
+    GET INPUT session.session_tutor
+
+    SET response, session.tutor_cod = user_code_parser(session.tutor_code)
+
+    IF response = 0 THEN
+        PRINT "[SERVER WARNING] Invalid user code.\n"
+        RETURN
+    ENDIF
+
+    session.tutor_code = user_id
+
+    SET num_sessions = 0
+    SET tutor FROM STRUCTURE users = get_tutor(user_id)
+    SET sessions FROM STRUCTURE enrolled_sessions, num_sessions = get_enrolled_sessions("user_id", user_id)
+
+    IF num_sessions < 1 && tutor.role = tutor" THEN
+        STORE session.session_code ";" session.title ";" session.session_day ";" session.day ";" session.start_time ";" session.location ";" session.tutor_code TO sessions_file
+        STORE session.session_code ";" user_id ";" tutor.name ";" tutor.role TO enrolled_sessions_file
+        PRINT "[SERVER INFO] Session added successfully!"
+    ELSE
+        PRINT "[SERVER ERROR] Tutor does not exist or has reached the maximum number of sessions."
+    ENDIF
+
+    FILE CLOSE sessions_file
+    FILE CLOSE enrolled_sessions_file
+
+    free(sessions)
+END
+
+/* void delete_session_menu(users session_user) */
+delete_session_menu(users session_user)
+    title_printer("Session operation - Delete session")
+
+    PRINT "Please enter the session code: "
+    SET session_code
+    GET INPUT session_code
+
+    SET session FROM STRUCTURE sessions = get_session("session_code", session_code)
+
+    IF session.session_code = "" THEN
+        PRINT "[SERVER ERROR] Session does not exist."
+        RETURN
+    ENDIF
+
+    sessions_file = FILE OPEN "sessions.txt" WITH "r"
+    sessions_temp_file = FILE OPEN "sessions_temp.txt" WITH "w"
+    enrolled_sessions_file = FILE OPEN "enrolled_sessions.txt" WITH "r"
+    enrolled_sessions_temp_file = FILE OPEN "enrolled_sessions_temp.txt" WITH "w"
+
+    SET line
+    DOWHILE fgets(line, sizeof(line), sessions_file)
+        IF strstr(line, session_code) = NULL THEN
+            STORE line TO sessions_temp_file
+        ENDIF
+    ENDDO
+
+    DOWHILE fgets(line, sizeof(line), enrolled_sessions_file)
+        IF strstr(line, session_code) == NULL THEN
+            STORE line TO enrolled_sessions_temp_file
+        ENDIF
+    ENDO
+
+
+    FILE CLOSE sessions_file
+    FILE CLOSE sessions_temp_file
+    FILE CLOSE enrolled_sessions_file
+    FILE CLOSE enrolled_sessions_temp_file
+
+    FILE REMOVE "sessions.txt"
+    FILE RENAME "sessions_temp.txt" TO "sessions.txt"
+
+    FILE REMOVE "enrolled_sessions.txt"
+    FILE RENAME "enrolled_sessions_temp.txt" TO "enrolled_sessions.txt"
+
+    PRINT "[SERVER INFO] Session deleted successfully!"
+END
+
+/* void view_session_menu(users session_user) */
+view_session_menu(users session_user)
+    title_printer("Session operation - View session")
+
+    PRINT "Please enter the session code: "
+    SET session_code
+    GET INPUT session_code
+
+    SET session FROM STRUCTURE sessions = get_session("session_code", session_code)
+
+    IF session.session_code = "" THEN
+        PRINT "[SERVER ERROR] Session does not exist."
+        RETURN
+    ENDIF
+
+    PRINT "## Session Details ##"
+    dash_printer(92);
+    PRINT "Session Code | Title | Day | Start Time | Location | Tutor Code"
+    dash_printer(92);
+    PRINT "{session.session_code} {session.title} {session.day} {session.start_time} {session.location} {session.tutor_code}"
+    dash_printer(92);
+    PRINT "\n"
+
+    SET num_sessions = 0
+    SET enrolled_sessions FROM STRUCTURE enrolled_sessions, num_sessions = get_enrolled_sessions("session_code", session_code)
+    PRINT "## Enrolled Users ##"
+    dash_printer(55)
+    PRINT "No. | Session | User ID | Name | Role"
+    dash_printer(55)
+
+    IF num_sessions > 0 THEN
+        DO i = 0 TO num_sessions
+            PRINT "{i + 1} {enrolled_sessions[i].session_code} {enrolled_sessions[i].user_id} {enrolled_sessions[i].name} {enrolled_sessions[i].role}"
+        ENDDO
+    ELSE
+        PRINT "No enrolled users."
+    ENDIF
+    dash_printer(55)
+    FREE enrolled_sessions
+END
+
+/* void enroll_user_menu(users session_user) */
+enroll_user_menu(users session_user)
+    title_printer("Session operation - Enroll user")
+
+    SET enrolled_sessions_file = FILE OPEN "enrolled_sessions.txt" WITH "a"
+    PRINT "Please enter the session code: "
+    SET session_code
+    GET INPUT session_code
+
+    SET session FROM STRUCTURE sessions = get_session("session_code", session_code)
+
+    IF session.session_code = "" THEN
+        PRINT "[SERVER ERROR] Session does not exist."
+        RETURN
+    ENDIF
+
+    PRINT "Please enter the user code: "
+    SET user_id
+    GET INPUT user_id
+
+    SET response, user_id = user_code_parser(user_code)
+
+    IF response = 0 THEN
+        PRINT "[SERVER WARNING] Invalid user code.\n"
+        RETURN
+    ENDIF
+
+    SET user FROM STRUCTURE users = get_user(user_id)
+
+    IF user.user_id = "" THEN
+        PRINT "[SERVER ERROR] User does not exist."
+        RETURN
+    ENDIF
+
+    IF user.role = "tutor" THEN
+        SET num_sessions = 0
+        SET user_sessions FROM STRUCTURE enrolled_sessions, num_sessions = get_enrolled_sessions("user_id", user_id)
+
+        IF num_sessions = 1 THEN
+            PRINT "[SERVER ERROR] A tutor cannot enroll in more than one session."
+            FREE user_sessions
+            RETURN
+        ENDIF
+
+        FREE user_sessions
+    ENDIF
+
+    SET num_sessions = 0
+    SET sessions FROM STRUCTURE enrolled_sessions, num_sessions = get_enrolled_sessions("session_code", session_code)
+
+    DO i = 0 TO num_sessions
+        IF sessions[i].user_id = user_id THEN
+            PRINT "[SERVER ERROR] User is already enrolled in this session."
+            FREE sessions
+            RETURN
+        ENDIF
+
+        IF sessions[i].role = "tutor" && user.role = "tutor" THEN
+            PRINT "[SERVER ERROR] A tutor cannot enroll in a session with another tutor."
+            FREE sessions
+            RETURN
+        ENDIF
+    ENDDO
+
+    FREE sessions
+
+    STORE session.session_code ";" user_id ";" user.name ";" user.role TO enrolled_sessions_file
+
+    FILE CLOSE enrolled_sessions_file
+
+    PRINT "[SERVER INFO] User enrolled successfully!"
+END
+
+/* void disenroll_user_menu(users session_user) */
+disenroll_user_menu(users session_user)
+    title_printer("Session operation - Disenroll user")
+
+    PRINT "Please enter the session code: "
+    SET session_code
+    GET INPUT session_code
+
+    SET session FROM STRUCTURE sessions = get_session("session_code", session_code)
+
+    IF session.session_code = "" THEN
+        PRINT "[SERVER ERROR] Session does not exist."
+        RETURN
+    ENDIF
+
+    PRINT "Please enter the user code: "
+    SET user_id
+    GET INPUT user_id
+
+    SET response, user_id = user_code_parser(user_code)
+
+    IF response = 0 THEN
+        PRINT "[SERVER WARNING] Invalid user code.\n"
+        RETURN
+    ENDIF
+
+    SET user FROM STRUCTURE users = get_user(user_id)
+
+    IF user.user_id = "" THEN
+        PRINT "[SERVER ERROR] User does not exist."
+        RETURN
+    ENDIF
+
+    IF user.role = "tutor" THEN
+        PRINT "[SERVER ERROR] Tutor cannot be dis-enroll."
+        RETURN
+    ENDIF
+
+    SET num_sessions = 0
+    SET sessions FROM STRUCTURE enrolled_sessions, num_sessions = get_enrolled_sessions("session_code", session_code)
+
+    SET flag = 0
+
+    DO i = 0 TO num_sessions
+        IF sessions[i].user_id = user_id THEN
+            SET flag = 1
+            BREAK
+        ENDIF
+    ENDDO
+
+    FREE sessions
+
+    IF flag = 0 THEN
+        PRINT "[SERVER ERROR] Enrolled session does not exist."
+        RETURN
+    ENDIF
+
+    SET enrolled_sessions_file = FILE OPEN "enrolled_sessions.txt" WITH "r"
+    SET enrolled_sessions_temp_file = FILE OPEN "enrolled_sessions_temp.txt" WITH "w"
+
+    SET e_session FROM STRUCTURE enrolled_sessions
+
+    DOWHILE fscanf(enrolled_sessions_file, "%[^;];%[^;];%[^;];%[^;];\n", e_session.session_code, e_session.user_id, e_session.name, e_session.role) != EOF
+        IF e_session.session_code = session_code && e_session.user_id = user_id THEN
+            CONTINUE
+        ENDIF
+
+        STORE e_session.session_code ";" e_session.user_id ";" e_session.name ";" e_session.role TO enrolled_sessions_temp_file
+    ENDDO
+
+    FILE CLOSE enrolled_sessions_file
+    FILE CLOSE enrolled_sessions_temp_file
+
+    FILE REMOVE "enrolled_sessions.txt"
+    FILE RENAME "enrolled_sessions_temp.txt" TO "enrolled_sessions.txt"
+
+    PRINT "[SERVER INFO] User dis-enrolled successfully!"
+END
+
+/* void tutor_dashboard_menu(users session_user) */
+void tutor_dashboard_menu(users session_user)
+    SET flag = 1
+
+    DOWHILE flag = 1
+        title_printer("Dashboard")
+        printf "Welcome {session_user.name} ({session_user.role}) !"
+        printf "1. View my sessions."
+        printf "2. View students enrolled in sessions."
+        printf "0. Logout"
+
+        SET option
+        PRINT "Please select an option below: "
+        IF GET INPUT NOT int THEN
+            PRINT "[SERVER WARNING] Invalid input. Please enter a numeric integer."
+            DOWHILE getchar NOT '\n'
+            ENDO
+            CONTINUE
+        ENDIF
+
+        CASE OF option
+            1:
+                view_my_sessions_menu(session_user)
+                BREAK
+            2:
+                view_students_enrolled_in_sessions_menu(session_user)
+                BREAK
+            3:
+                SET flag = 0
+                BREAK
+            DEFAULT:
+                PRINT "[SERVER WARNING] Invalid option. Please try again."
+                BREAK
+        ENDCASE
+    ENDDO
+END
+
+/* void view_my_sessions_menu(users session_user) */
+view_my_sessions_menu(users session_user)
+    title_printer("View students enrolled in sessions")
+
+    SET tutor_code = "TU"
+    tutor_code =  tutor_code + session_user.user_id
+
+    SET session FROM STRUCTURE sessions = get_session("tutor_code", tutor_code)
+
+    SET num_sessions = 0
+    SET enrolled_sessions FROM STRUCTURE enrolled_sessions, num_sessions = get_enrolled_sessions("session_code", session.session_code)
+
+    PRINT "## Enrolled Students ##"
+    dash_printer(55)
+
+    PRINT "No. | Session | User ID | Name | Role"
+    dash_printer(55)
+
+    IF num_sessions > 0 THEN
+        DO i = 0 TO num_sessions
+            IF enrolled_sessions[i].role = "student" THEN
+                PRINT "{i} | {enrolled_sessions[i].session_code} | {enrolled_sessions[i].user_id} | {enrolled_sessions[i].name} | {enrolled_sessions[i].role}"
+            ENDIF
+        ENDDO
+    ELSE
+        PRINT "No enrolled student."
+    ENDIF
+    dash_printer(55)
+
+    FREE enrolled_sessions
+END
+
+/* voide student_dashboard_menu(users session_user) */
+student_dashboard_menu(users session_user)
+    SET flag = 1
+
+    DOWHILE flag = 1
+        title_printer("Dashboard")
+        printf "Welcome {session_user.name} ({session_user.role}) !"
+        printf "1. View my sessions."
+        printf "2. Enroll into session."
+        printf "0. Logout"
+
+        SET option
+        PRINT "Please select an option below: "
+        IF GET INPUT NOT int THEN
+            PRINT "[SERVER WARNING] Invalid input. Please enter a numeric integer."
+            DOWHILE getchar NOT '\n'
+            ENDO
+            CONTINUE
+        ENDIF
+
+        CASE OF option
+            1:
+                view_my_sessions_menu(session_user)
+                BREAK
+            2:
+                enroll_into_session_menu(session_user)
+                BREAK
+            3:
+                SET flag = 0
+                BREAK
+            DEFAULT:
+                PRINT "[SERVER WARNING] Invalid option. Please try again."
+                BREAK
+        ENDCASE
+    ENDDO
+END
+
+/* void view_my_sessions_menu(users session_user) */
+view_my_sessions_menu(users session_user)
+    title_printer("View my sessions")
+
+    SET num_sessions = 0
+    SET enrolled_sessions FROM STRUCTURE enrolled_sessions, num_sessions = get_enrolled_sessions("user_id", session_user.user_id)
+
+    PRINT "## Enrolled Sessions ##"
+    dash_printer(55)
+
+    PRINT "No. | Session | User ID | Name | Role"
+    dash_printer(55)
+
+    IF num_sessions > 0 THEN
+        DO i = 0 TO num_sessions
+            PRINT "{i+1} | {enrolled_sessions[i].session_code} | {enrolled_sessions[i].user_id} | {enrolled_sessions[i].name} | {enrolled_sessions[i].role}"
+        ENDDO
+    ELSE
+        PRINT "No enrolled session."
+    ENDIF
+    dash_printer(55)
+
+    FREE enrolled_sessions
+END
+
+/* void enroll_into_session_menu(users session_user) */
+enroll_into_session_menu(users session_user)
+    title_printer("Enroll into session")
+
+    SET num_lines = 0
+    SET lines, num_lines = read("sessions.txt")
+
+    SET available_session FROM STRUCTURE sessions
+
+    IF NOT lines = NULL THEN
+        dash_printer(98)
+        PRINT "No. | Session Code | Title | Day | Start time | Location| Tutor Code"
+        dash_printer(98)
+
+        DO i = 0 TO num_lines
+            SET session.session_code = SPLIT ";" FROM lines[i]
+            SET session.title = SPLIT ";" FROM lines[i]
+            SET session.day = SPLIT ";" FROM lines[i]
+            SET session.start_time = SPLIT ";" FROM lines[i]
+            SET session.location = SPLIT ";" FROM lines[i]
+            SET session.tutor_code = SPLIT ";" FROM lines[i]
+
+            PRINT "{i+1} | {session.session_code} | {session.title} | {session.day} | {session.start_time} | {session.location} | {session.tutor_code}"
+        ENDDO
+        dash_printer(98)
+
+        DO i = 0 TO num_lines
+            FREE lines[i]
+        ENDDO
+
+        FREE lines
+    ENDIF
+
+    PRINT "Please enter the session code: "
+    SET session_code
+    GET INPUT session_code
+
+    SET session FROM STRUCTURE sessions = get_session("session_code", session_code)
+
+    IF session.session_code = "" THEN
+        PRINT "[SERVER WARNING] Session does not exist."
+        RETURN
+    ENDIF
+
+    SET num_sessions = 0
+    SET enrolled_sessions FROM STRUCTURE enrolled_sessions, num_sessions = get_enrolled_sessions("user_id", session_user.user_id)
+
+    DO i = 0 TO num_sessions
+        IF enrolled_sessions[i].session_code = session.session_code THEN
+            PRINT "[SERVER WARNING] You have already enrolled into this session."
+            FREE enrolled_sessions
+            RETURN
+        ENDIF
+    ENDDO
+
+    FREE enrolled_sessions
+
+    SET enrolled_sessions_file = FILE OPEN "enrolled_sessions.txt" WITH "a"
+    FILE STORE "{session.session_code} {session_user.user_id} {session_user.name} {session_user.role}" TO enrolled_sessions_file
+
+    FILE CLOSE enrolled_sessions_file
+
+    PRINT "[SERVER SUCCESS] You have successfully enrolled into {session.title}."
+END
+
+/* void setup() */
+setup()
+    SET sessions_file = FILE OPEN "sessions.txt" WITH "w"
+    SET enrolled_sessions_file = FILE OPEN "enrolled_sessions.txt" WITH "w"
+    SET users_file = FILE OPEN "users.txt" WITH "w"
+    SET tutor_profiles_file = FILE OPEN "tutor_profiles.txt" WITH "w"
+    SET student_profiles_file = FILE OPEN "student_profiles.txt" WITH "w"
+
+    SET default_sessions =
+        [["PYP101", "Python Programming",  "Saturday", "9.00am", "C-01-01", "TU265663"]
+        ["JAV102", "Java Programming",    "Sunday",   "9.00am", "C-01-02", "TU009650"]
+        ["CSC103", "C Programming",       "Saturday", "2.00pm", "C-01-03", "TU544654"]
+        ["WEB104", "Web Development",     "Sunday",   "2.00pm", "C-01-04", "TU577001"]
+        ["CSP105", "C Sharp Programming", "Monday",   "7.00pm", "C-01-05", "TU683357"]]
+
+    SET default_enrolled_sessions =
+        [["PYP101", "265663", "Mary",   "tutor"]
+        ["JAV102", "009650", "Peter",  "tutor"]
+        ["CSC103", "544654", "James",  "tutor"]
+        ["WEB104", "577001", "Johnny", "tutor"]
+        ["CSP105", "683357", "David",  "tutor"]
+        ["CSP105", "072187", "Jammie", "student"]]
+
+    SET default_users =
+        [["123123", "John",   "123123", "admin@apu.edu.my", "admin"]
+        ["265663", "Mary",   "123123", "marry@apu.edu.my", "tutor"]
+        ["009650", "Peter",  "123123", "peter@apu.edu.my", "tutor"]
+        ["544654", "James",  "123123", "james@apu.edu.my", "tutor"]
+        ["577001", "Johnny", "123123", "john@apu.edu.my",  "tutor"]
+        ["683357", "David",  "123123", "david@apu.edu.my", "tutor"]
+        ["293333", "howard", "123123", "howard@apu.edu.my", "tutor"]
+        ["072187", "Jammie", "123123", "jamie@apu.edu.my", "student"]
+        ["073188", "Jin", "123123", "jin@apu.edu.my", "student"]]
+
+    SET default_tutor_profiles =
+        [["265663", "TU265663", "Python Programming Tutor"]
+        ["009650", "TU009650", "Java Programming Tutor"]
+        ["544654", "TU544654", "C Programming Tutor"]
+        ["577001", "TU577001", "Web Development Tutor"]
+        ["683357", "TU683357", "C Sharp Programming Tutor"]
+        ["073188", "TU073188", "Null"]]
+    SET default_student_profiles =
+        [["072187", "TP072187"]
+        ["073188", "TP073188"]]
+
+    DO i = 0 TO 5
+        DO j = 0 TO 6
+            FILE STORE "{default_sessions[i][j]};" TO sessions_file
+        ENDDO
+        FILE STORE "\n" TO sessions_file
+    ENDDO
+
+    DO i = 0 TO 6
+        DO j = 0 TO 4
+            FILE STORE "{default_enrolled_sessions[i][j]};" TO enrolled_sessions_file
+        ENDDO
+        FILE STORE "\n" TO sessions_file
+    ENDDO
+
+    DO i = 0 TO 9
+        DO j = 0 TO 5
+            FILE STORE "{default_users[i][j]};" TO users_file
+        ENDDO
+        FILE STORE "\n" TO sessions_file
+    ENDDO
+
+    DO i = 0 TO 6
+        DO j = 0 TO 3
+            FILE STORE "{default_tutor_profiles[i][j]};" TO tutor_profiles_file
+        ENDDO
+        FILE STORE "\n" TO sessions_file
+    ENDDO
+
+    DO i = 0 TO 2
+        DO j = 0 TO 2
+            FILE STORE "{default_student_profiles[i][j]};" TO student_profiles_file
+        ENDDO
+        FILE STORE "\n" TO sessions_file
+    ENDDO
+
+    FILE CLOSE sessions_file
+    FILE CLOSE enrolled_sessions_file
+    FILE CLOSE users_file
+    FILE CLOSE tutor_profiles_file
+    FILE CLOSE student_profiles_file
 END
