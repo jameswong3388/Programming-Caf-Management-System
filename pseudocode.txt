@@ -1149,3 +1149,306 @@ setup()
     FILE CLOSE tutor_profiles_file
     FILE CLOSE student_profiles_file
 END
+
+/* char **read(char *filename, int *num_lines) */
+**read(char *filename, int *num_lines)
+    SET lines
+
+    SET fp = FILE OPEN filename WITH "r"
+
+    IF fp = NULL THEN
+        PRINT "[SERVER WARNING] Failed to open file {filename}."
+        RETURN NULL
+    ENDIF
+
+    SET count = 0
+    SET c
+
+    DOWHILE NOT c = fgetc = EOF
+        IF c = '\n' THEN
+            count = count + 1
+        ENDIF
+    ENDDO
+
+    REWIND fp
+
+    SET lines = ALLOCATE count * sizeof(char *)
+
+    IF lines = NULL THEN
+        PRINT "[SERVER WARNING] Failed to allocate memory for lines array."
+        RETURN NULL
+    ENDIF
+
+    DO i = 0 TO count
+        SET lines[i] = ALLOCATE MAX_STRING_LENGTH * sizeof(char)
+    ENDDO
+
+    SET i = 0
+    DOWHILE NOT fgets(lines[i], MAX_STRING_LENGTH, fp) == NULL
+        i = i + 1
+    ENDDO
+
+    FILE CLOSE fp
+    SET num_lines = count
+
+    RETURN lines
+END
+
+/* void title_printer(char *title) */
+title_printer(char *title)
+    SET str_len = LEN title
+    SET line_len = 4 + str_len
+
+    dash_printer(line_len)
+
+    PRINT "| {title} |"
+
+    dash_printer(line_len)
+END
+
+/* void dash_printer(int num) */
+dash_printer(int num)
+    DO i = 0 TO num
+        PRINT "-"
+    ENDDO
+    PRINT "\n"
+END
+
+/* int user_code_parser(char *user_code) */
+user_code_parser(char *user_code)
+    SET valid_user_id = 0
+
+    IF user_code[0] = 'T' && user_code[1] = 'P' OR user_code[0] = 't' && user_code[1] = 'p' ||
+       user_code[0] = 't' && user_code[1] = 'P' OR user_code[0] = 'T' && user_code[1] = 'p' THEN
+        valid_user_id = 1
+        DO i = 0 TO LEN user_code
+            IF user_code[i] < '0' OR user_code[i] > '9' THEN
+                user_code[i] = user_code[i + 2]
+            ENDIF
+        ENDDO
+    ELSE IF user_code[0] = 'T' && user_code[1] = 'U' OR user_code[0] = 't' && user_code[1] = 'u' ||
+            user_code[0] = 't' && user_code[1] = 'U' OR user_code[0] = 'T' && user_code[1] = 'u' THEN
+        DO i = 0 TO LEN user_code
+            IF user_code[i] < '0' OR user_code[i] > '9' THEN
+                user_code[i] = user_code[i + 2]
+            ENDIF
+        ENDDO
+    ELSE IF user_code[0] = 'A' && user_code[1] = 'D' OR user_code[0] = 'a' && user_code[1] = 'd' ||
+            user_code[0] = 'a' && user_code[1] = 'D' OR user_code[0] = 'A' && user_code[1] = 'd' THEN
+        DO i = 0 TO LEN user_code
+            IF user_code[i] < '0' OR user_code[i] > '9' THEN
+                user_code[i] = user_code[i + 2]
+            ENDIF
+        ENDDO
+    ENDIF
+
+    return valid_user_id
+END
+
+/* sessions get_session(char *filter_field, char *filter_value) */
+get_session(char *filter_field, char *filter_value)
+    SET s FROM STRUCT sessions
+    SET buffer
+    SET fp = FILE OPEN sessions_file WITH "r"
+
+    IF fp = NULL THEN
+        PRINT "[SERVER WARNING] Failed to open file sessions.txt."
+        RETURN s
+    ENDIF
+
+    DOWHILE NOT fgets(buffer, sizeof(buffer), fp) != NULL
+        SET session_code_field = SPLIT ";" FROM buffer
+        SET title_field = SPLIT ";" FROM buffer
+        SET day_field = SPLIT ";" FROM buffer
+        SET start_time_field = SPLIT ";" FROM buffer
+        SET location_field = SPLIT ";" FROM buffer
+        SET tutor_code_field = SPLIT ";" FROM buffer
+        IF filter_field = "session_code" AND session_code_field = filter_value THEN
+            SET S.session_code = session_code_field
+            SET S.title = title_field
+            SET S.day = day_field
+            SET S.start_time = start_time_field
+            SET S.location = location_field
+            SET S.tutor_code = tutor_code_field
+
+            FILE CLOSE fp
+            RETURN s
+
+        ELSE IF filter_field = "tutor_code" AND tutor_code_field = filter_value
+            SET S.session_code = session_code_field
+            SET S.title = title_field
+            SET S.day = day_field
+            SET S.start_time = start_time_field
+            SET S.location = location_field
+            SET S.tutor_code = tutor_code_field
+
+            FILE CLOSE fp
+            RETURN s
+        ENDIF
+    ENDDO
+
+    FILE CLOSE fp
+
+    RETURN s
+END
+
+/* enrolled_sessions *get_enrolled_sessions(char *filter_field, char *filter_value, int *num_sessions) */
+get_enrolled_sessions(char *filter_field, char *filter_value, int *num_sessions)
+    SET sessions FROM STRUCT enrolled_sessions = NULL
+    SET BUFFER
+
+    SET fp = FILE OPEN enrolled_sessions_file WITH "r"
+    IF fp = NULL THEN
+        PRINT "[SERVER WARNING] Failed to open file enrolled_sessions.txt."
+        RETURN sessions
+    ENDIF
+
+    DOWHILE NOT fgets(buffer, sizeof(buffer), fp) = NULL
+        SET session_code_field = SPLIT ";" FROM buffer
+        SET user_id_field = SPLIT ";" FROM buffer
+        SET name_field = SPLIT ";" FROM buffer
+        SET role_field = SPLIT ";" FROM buffer
+
+        IF filter_field = "session_code" AND session_code_field = filter_value THEN
+            count = count + 1
+        ELSE IF filter_field = "user_id" AND user_id_field = filter_value
+            count = count + 1
+        ENDIF
+    ENDDO
+
+    SET sessions = ALLOCATE count * sizeof(enrolled_sessions)
+    IF sessions = NULL THEN
+        PRINT "[SERVER WARNING] Failed to allocate memory for sessions array."
+        RETURN sessions
+    ENDIF
+
+    REWIND fp
+
+    SET i = 0
+
+    DOWHILE NOT fgets(buffer, sizeof(buffer), fp) = NULL
+        SET session_code_field = SPLIT ";" FROM buffer
+        SET user_id_field = SPLIT ";" FROM buffer
+        SET name_field = SPLIT ";" FROM buffer
+        SET role_field = SPLIT ";" FROM buffer
+
+        IF filter_field = "session_code" AND session_code_field = filter_value THEN
+            SET sessions[i].session_code = session_code_field
+            SET sessions[i].user_id = user_id_field
+            SET sessions[i].name = name_field
+            SET sessions[i].role = role_field
+            i = i + 1
+        ELSE IF filter_field = "user_id" AND user_id_field = filter_value
+            SET sessions[i].session_code = session_code_field
+            SET sessions[i].user_id = user_id_field
+            SET sessions[i].name = name_field
+            SET sessions[i].role = role_field
+            i = i + 1
+        ENDIF
+    ENDDO
+
+    NUM_SESSIONS = count
+
+    FILE CLOSE fp
+
+    RETURN sessions
+END
+
+/* users get_user(char *user_id) */
+get_user(char *user_id)
+    SET u FROM STRUCT users
+    SET buffer
+    SET fp = FILE OPEN users_file WITH "r"
+
+    IF fp = NULL THEN
+        PRINT "[SERVER WARNING] Failed to open file users.txt."
+        RETURN u
+    ENDIF
+
+    DOWHILE NOT fgets(buffer, sizeof(buffer), fp) != NULL
+        SET user_id_field = SPLIT ";" FROM buffer
+        SET name_field = SPLIT ";" FROM buffer
+        SET password_field = SPLIT ";" FROM buffer
+        SET email_field = SPLIT ";" FROM buffer
+        SET role_field = SPLIT ";" FROM buffer
+
+
+        IF user_id_field = user_id THEN
+            SET U.user_id = user_id_field
+            SET U.name = name_field
+            SET U.password = password_field
+            SET U.email = email_field
+            SET U.role = role_field
+
+            FILE CLOSE fp
+            RETURN s
+        ENDIF
+    ENDDO
+
+    FILE CLOSE fp
+
+    RETURN u
+END
+
+/* student_profiles get_student_profile(char *user_id) */
+get_student_profile(char *user_id)
+    SET sp FROM STRUCT student_profiles
+    SET buffer
+    SET fp = FILE OPEN student_profiles_file WITH "r"
+
+    IF fp = NULL THEN
+        PRINT "[SERVER WARNING] Failed to open file student_profiles.txt."
+        RETURN sp
+    ENDIF
+
+    DOWHILE NOT fgets(buffer, sizeof(buffer), fp) != NULL
+        SET user_id_field = SPLIT ";" FROM buffer
+        SET student_code_field = SPLIT ";" FROM buffer
+
+
+
+        IF user_id_field = user_id THEN
+            SET SP.user_id = user_id_field
+            SET SP.student_code = student_code_field
+
+            FILE CLOSE fp
+            RETURN sp
+        ENDIF
+    ENDDO
+
+    FILE CLOSE fp
+
+    RETURN sp
+END
+
+/* tutor_profiles get_tutor_profile(char *user_id) */
+get_tutor_profile(char *user_id)
+    SET tp FROM STRUCT tutor_profiles
+    SET buffer
+    SET fp = FILE OPEN tutor_profiles_file WITH "r"
+
+    IF fp = NULL THEN
+        PRINT "[SERVER WARNING] Failed to open file tutor_profiles.txt."
+        RETURN tp
+    ENDIF
+
+    DOWHILE NOT fgets(buffer, sizeof(buffer), fp) != NULL
+        SET user_id_field = SPLIT ";" FROM buffer
+        SET tutor_code_field = SPLIT ";" FROM buffer
+        SET title_field = SPLIT ";" FROM buffer
+
+
+        IF user_id_field = user_id THEN
+            SET TP.user_id = user_id_field
+            SET TP.tutor_code = tutor_code_field
+            SET TP.title = title_field
+
+            FILE CLOSE fp
+            RETURN tp
+        ENDIF
+    ENDDO
+
+    FILE CLOSE fp
+
+    RETURN tp
+END
