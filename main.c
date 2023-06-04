@@ -888,11 +888,13 @@ void enroll_user_menu(users session_user) {
     for (int i = 0; i < num_sessions; i++) {
         if (strcmp(sessions[i].user_id, user_id) == 0) {
             printf("[SERVER ERROR] User is already enrolled in the session.\n");
+            free(sessions);
             return;
         }
 
         if (strcmp(sessions[i].role, "tutor") == 0 && strcmp(user.role, "tutor") == 0) {
             printf("[SERVER ERROR] A session cannot have more than one tutor.\n");
+            free(sessions);
             return;
         }
     }
@@ -955,20 +957,17 @@ void disenroll_user_menu(users session_user) {
         }
     }
 
+    free(sessions);
+
     if (flag == 0) {
         printf("[SERVER ERROR] Enrolled session does not exist.\n");
-        free(sessions);
         return;
     }
-
-    free(sessions);
 
     FILE *enrolled_sessions_file = fopen("enrolled_sessions.txt", "r");
     FILE *enrolled_sessions_temp_file = fopen("enrolled_sessions_temp.txt", "w");
 
     enrolled_sessions e_session;
-    printf("%s\n", session_code);
-    printf("%s\n", user_id);
 
     while (fscanf(enrolled_sessions_file, "%[^;];%[^;];%[^;];%[^;];\n", e_session.session_code, e_session.user_id, e_session.name, e_session.role) != EOF) {
         if (strcmp(e_session.session_code, session_code) == 0 && strcmp(e_session.user_id, user_id) == 0) {
@@ -1015,7 +1014,7 @@ void tutor_dashboard_menu(users session_user) {
                 flag = 0;
                 break;
             default:
-                printf("[SERVER WARNING] Invalid choice.\n");
+                printf("[SERVER WARNING] Invalid option. Please try again.\n");
                 break;
         }
     }
@@ -1083,7 +1082,7 @@ void student_dashboard_menu(users session_user) {
                 flag = 0;
                 break;
             default:
-                printf("[SERVER WARNING] Invalid choice.\n");
+                printf("[SERVER WARNING] Invalid option. Please try again.\n");
                 break;
         }
     }
@@ -1176,6 +1175,7 @@ void enroll_into_session_menu(users session_user) {
     for (int i = 0; i < num_sessions; i++) {
         if (strcmp(enrolled_session[i].session_code, session_code) == 0) {
             printf("[SERVER ERROR] You have already enrolled into this session.\n");
+            free(enrolled_session);
             return;
         }
     }
@@ -1360,19 +1360,19 @@ int user_code_parser(char *user_code) {
     if ((user_code[0] == 'T' && user_code[1] == 'P') || (user_code[0] == 't' && user_code[1] == 'p') ||
         (user_code[0] == 't' && user_code[1] == 'P') || (user_code[0] == 'T' && user_code[1] == 'p')) {
         valid_user_id = 1;
-        for (int i = 0; i < MAX_USER_CODE_LENGTH; i++) {
+        for (int i = 0; i < strlen(user_code); i++) {
             user_code[i] = user_code[i + 2];
         }
     } else if ((user_code[0] == 'T' && user_code[1] == 'U') || (user_code[0] == 't' && user_code[1] == 'u') ||
                (user_code[0] == 't' && user_code[1] == 'U') || (user_code[0] == 'T' && user_code[1] == 'u')) {
         valid_user_id = 1;
-        for (int i = 0; i < MAX_USER_CODE_LENGTH; i++) {
+        for (int i = 0; i < strlen(user_code); i++) {
             user_code[i] = user_code[i + 2];
         }
     } else if ((user_code[0] == 'A' && user_code[1] == 'D') || (user_code[0] == 'a' && user_code[1] == 'd') ||
                (user_code[0] == 'a' && user_code[1] == 'D') || (user_code[0] == 'A' && user_code[1] == 'd')) {
         valid_user_id = 1;
-        for (int i = 0; i < MAX_USER_CODE_LENGTH; i++) {
+        for (int i = 0; i < strlen(user_code); i++) {
             user_code[i] = user_code[i + 2];
         }
     }
