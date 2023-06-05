@@ -708,7 +708,7 @@ void add_session_menu(users session_user) {
     printf("Please enter the session location: \n");
     scanf("%s", session.location);
 
-    printf("Enrolled a tutor into the session: \n");
+    printf("Enroll a tutor into the session: \n");
     scanf("%s", session.tutor_code);
 
     int response = user_code_parser(session.tutor_code);
@@ -969,12 +969,14 @@ void disenroll_user_menu(users session_user) {
 
     enrolled_sessions e_session;
 
-    while (fscanf(enrolled_sessions_file, "%[^;];%[^;];%[^;];%[^;];\n", e_session.session_code, e_session.user_id, e_session.name, e_session.role) != EOF) {
+    while (fscanf(enrolled_sessions_file, "%[^;];%[^;];%[^;];%[^;];\n", e_session.session_code, e_session.user_id,
+                  e_session.name, e_session.role) != EOF) {
         if (strcmp(e_session.session_code, session_code) == 0 && strcmp(e_session.user_id, user_id) == 0) {
             continue;
         }
 
-        fprintf(enrolled_sessions_temp_file, "%s;%s;%s;%s;\n", e_session.session_code, e_session.user_id, e_session.name, e_session.role);
+        fprintf(enrolled_sessions_temp_file, "%s;%s;%s;%s;\n", e_session.session_code, e_session.user_id,
+                e_session.name, e_session.role);
     }
 
     fclose(enrolled_sessions_file);
@@ -1219,15 +1221,15 @@ void setup() {
     };
 
     char default_users[9][5][50] = {
-            {"123123", "John",   "123123", "admin@apu.edu.my", "admin"},
-            {"265663", "Mary",   "123123", "marry@apu.edu.my", "tutor"},
-            {"009650", "Peter",  "123123", "peter@apu.edu.my", "tutor"},
-            {"544654", "James",  "123123", "james@apu.edu.my", "tutor"},
-            {"577001", "Johnny", "123123", "john@apu.edu.my",  "tutor"},
-            {"683357", "David",  "123123", "david@apu.edu.my", "tutor"},
+            {"123123", "John",   "123123", "admin@apu.edu.my",  "admin"},
+            {"265663", "Mary",   "123123", "marry@apu.edu.my",  "tutor"},
+            {"009650", "Peter",  "123123", "peter@apu.edu.my",  "tutor"},
+            {"544654", "James",  "123123", "james@apu.edu.my",  "tutor"},
+            {"577001", "Johnny", "123123", "john@apu.edu.my",   "tutor"},
+            {"683357", "David",  "123123", "david@apu.edu.my",  "tutor"},
             {"293333", "howard", "123123", "howard@apu.edu.my", "tutor"},
-            {"072187", "Jammie", "123123", "jamie@apu.edu.my", "student"},
-            {"073188", "Jin", "123123", "jin@apu.edu.my", "student"}
+            {"072187", "Jammie", "123123", "jamie@apu.edu.my",  "student"},
+            {"073188", "Jin",    "123123", "jin@apu.edu.my",    "student"}
     };
 
     char default_tutor_profiles[6][3][50] = {

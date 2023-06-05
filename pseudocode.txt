@@ -596,7 +596,7 @@ add_session_menu(users session_user)
     PRINT "Please enter the session location: "
     GET INPUT session.session_location
 
-    PRINT "Enrolled a tutor into the session: "
+    PRINT "Enroll a tutor into the session: "
     GET INPUT session.session_tutor
 
     SET response, session.tutor_cod = user_code_parser(session.tutor_code)
