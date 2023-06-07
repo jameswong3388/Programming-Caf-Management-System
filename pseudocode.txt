@@ -156,7 +156,7 @@ login_menu
             BREAK
         ELSE
             login_attempts = login_attempts + 1
-            PRINT [SERVER WARNING] Login id or password is incorrect, {login_attempts} attempts left. Please try again."
+            PRINT "[SERVER WARNING] Login id or password is incorrect, {login_attempts} attempts left. Please try again."
         ENDIF
     ENDDO
 
