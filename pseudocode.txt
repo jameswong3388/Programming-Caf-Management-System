@@ -584,6 +584,13 @@ add_session_menu(users session_user)
         ENDIF
     ENDDO
 
+    SET existing_session FROM STRUCTURE sessions = get_session("session_code, "session.session_code)
+
+    IF existing_session.session_code != "" THEN
+        PRINT "[SERVER WARNING] [SERVER ERROR] Session code already exists."
+        RETURN
+    ENDIF
+
     PRINT "Please enter the session name: "
     GET INPUT session.session_name
 

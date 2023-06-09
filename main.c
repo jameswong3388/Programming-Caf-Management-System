@@ -696,7 +696,12 @@ void add_session_menu(users session_user) {
         }
     }
 
+    sessions existing_session = get_session("session_code", session.session_code);
 
+    if (strcmp(existing_session.session_code, "") != 0) {
+        printf("[SERVER ERROR] Session code already exists.\n");
+        return;
+    }
 
     printf("Please enter the session name: \n");
     scanf("%s", session.title);
