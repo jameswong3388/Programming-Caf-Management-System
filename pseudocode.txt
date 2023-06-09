@@ -757,16 +757,8 @@ enroll_user_menu(users session_user)
     ENDIF
 
     IF user.role = "tutor" THEN
-        SET num_sessions = 0
-        SET user_sessions FROM STRUCTURE enrolled_sessions, num_sessions = get_enrolled_sessions("user_id", user_id)
-
-        IF num_sessions = 1 THEN
-            PRINT "[SERVER ERROR] A tutor cannot enroll in more than one session."
-            FREE user_sessions
-            RETURN
-        ENDIF
-
-        FREE user_sessions
+        PRINT "[SERVER ERROR] Tutor cannot be enrolled in a session here."
+        RETURN
     ENDIF
 
     SET num_sessions = 0
@@ -775,12 +767,6 @@ enroll_user_menu(users session_user)
     DO i = 0 TO num_sessions
         IF sessions[i].user_id = user_id THEN
             PRINT "[SERVER ERROR] User is already enrolled in this session."
-            FREE sessions
-            RETURN
-        ENDIF
-
-        IF sessions[i].role = "tutor" && user.role = "tutor" THEN
-            PRINT "[SERVER ERROR] A tutor cannot enroll in a session with another tutor."
             FREE sessions
             RETURN
         ENDIF

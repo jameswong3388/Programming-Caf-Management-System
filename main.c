@@ -876,16 +876,8 @@ void enroll_user_menu(users session_user) {
     }
 
     if (strcmp(user.role, "tutor") == 0) {
-        int num_sessions = 0;
-        enrolled_sessions *user_sessions = get_enrolled_sessions("user_id", user_id, &num_sessions);
-
-        if (num_sessions == 1) {
-            printf("[SERVER ERROR] A tutor cannot enroll in more than one session.\n");
-            free(user_sessions);
-            return;
-        }
-
-        free(user_sessions);
+        printf("[SERVER ERROR] Tutor cannot be enrolled in a session here.\n");
+        return;
     }
 
     int num_sessions = 0;
@@ -895,12 +887,6 @@ void enroll_user_menu(users session_user) {
     for (int i = 0; i < num_sessions; i++) {
         if (strcmp(sessions[i].user_id, user_id) == 0) {
             printf("[SERVER ERROR] User is already enrolled in the session.\n");
-            free(sessions);
-            return;
-        }
-
-        if (strcmp(sessions[i].role, "tutor") == 0 && strcmp(user.role, "tutor") == 0) {
-            printf("[SERVER ERROR] A session cannot have more than one tutor.\n");
             free(sessions);
             return;
         }
