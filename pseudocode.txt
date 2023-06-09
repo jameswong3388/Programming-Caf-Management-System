@@ -416,7 +416,7 @@ END
 
 /* void view_all_user_menu(users session_user) */
 view_all_user_menu(users session_user)
-    title_printer("User operation - View user")
+    title_printer("User operation - View all users")
 
     SET number_lines
     SET lines, num_lines = read("sessions.txt")
@@ -448,7 +448,7 @@ END
 
 /* void view_user_menu(users session_user) */
 view_user_menu(users session_user)
-    title_printer("User operation - View user")
+    title_printer("User operation - View user profile")
 
     SET user_id
 

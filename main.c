@@ -521,7 +521,7 @@ void delete_user_menu(users session_user) {
 }
 
 void view_all_user_menu(users session_user) {
-    title_printer("User operation - View user");
+    title_printer("User operation - View all users");
 
     int num_lines;
     char **lines = read("users.txt", &num_lines);
@@ -560,7 +560,7 @@ void view_all_user_menu(users session_user) {
 }
 
 void view_user_menu(users session_user) {
-    title_printer("User operation - View user");
+    title_printer("User operation - View user profile");
 
     char user_id[MAX_USER_CODE_LENGTH];
 
@@ -695,6 +695,8 @@ void add_session_menu(users session_user) {
             printf("[SERVER WARNING] Session code must be 6 characters long.\n");
         }
     }
+
+
 
     printf("Please enter the session name: \n");
     scanf("%s", session.title);
