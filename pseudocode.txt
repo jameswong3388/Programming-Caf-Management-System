@@ -370,6 +370,23 @@ delete_user_menu(users session_user)
         FILE REMOVE "users.txt"
         FILE RENAME "users_temp.txt" TO "users.txt"
 
+        SET enrolled_sessions_file = FILE OPEN "enrolled_sessions.txt" WITH "r"
+        SET enrolled_sessions_temp_file = FILE OPEN "enrolled_sessions_temp_file.txt" WITH "w"
+
+        SET es FROM STRUCTURE enrolled_sessions
+
+        DOWHILE  fscanf(users_file, "%[^;];%[^;];%[^;];%[^;];%[^;];\n", es.session_code, es.user_id,es.name, es.role) NOT EOF
+            IF NOT user.user_id = user_id THEN
+                STORE es.session_code";"es.user_id";"es.name";"user.email";"es.role INTO temp_users_file
+            ENDIF
+        ENDO
+
+        FILE CLOSE enrolled_sessions_file
+        FILE CLOSE enrolled_sessions_temp_file
+
+        FILE REMOVE "enrolled_sessions.txt"
+        FILE RENAME "enrolled_sessions_temp.txt" TO "enrolled_sessions.txt"
+
         IF is_student = 1 THEN
             SET student_profiles_file = FILE OPEN "student_profiles.txt" WITH "r"
             SET student_profiles_temp_file = FILE OPEN "student_profiles_temp.txt" WITH "w"

@@ -473,6 +473,23 @@ void delete_user_menu(users session_user) {
         remove("users.txt");
         rename("users_temp.txt", "users.txt");
 
+        FILE* enrolled_sessions_file = fopen("enrolled_sessions.txt", "r");
+        FILE* enrolled_sessions_temp_file = fopen("enrolled_sessions_temp.txt", "w");
+
+        enrolled_sessions es;
+
+        while (fscanf(enrolled_sessions_file, "%[^;];%[^;];%[^;];%[^;];\n", es.session_code, es.user_id,es.name, es.role) != EOF) {
+            if (strcmp(es.user_id, user_id) != 0) {
+                fprintf(enrolled_sessions_temp_file, "%s;%s;%s;%s;\n", es.session_code, es.user_id,es.name, es.role);
+            }
+        }
+
+        fclose(enrolled_sessions_file);
+        fclose(enrolled_sessions_temp_file);
+
+        remove("enrolled_sessions.txt");
+        rename("enrolled_sessions_temp.txt", "enrolled_sessions.txt");
+
         if (is_student == 1) {
             // delete student profile
             FILE *student_profiles_file = fopen("student_profiles.txt", "r");
